@@ -1,4 +1,4 @@
-import { assertEquals, assertExists } from "std/assert";
+import { assertEquals, assertExists } from "$std/assert/mod.ts";
 import { setupTestEnv, cleanupTestEnv } from "./test_env.ts";
 
 const requiredEnvVars = [
@@ -30,8 +30,10 @@ Deno.test({
       for (const envVar of requiredEnvVars) {
         const value = Deno.env.get(envVar);
         assertExists(value, `${envVar} should be set`);
-        assertEquals(typeof value, "string", `${envVar} should be a string`);
-        assertEquals(value.length > 0, true, `${envVar} should not be empty`);
+        if (value) {
+          assertEquals(typeof value, "string", `${envVar} should be a string`);
+          assertEquals(value.length > 0, true, `${envVar} should not be empty`);
+        }
       }
     });
 

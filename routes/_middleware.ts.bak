@@ -1,5 +1,6 @@
 import { MiddlewareHandlerContext } from "$fresh/server.ts";
 import { kindeClient } from "../utils/kinde.ts";
+import { createSessionManager } from "../utils/session.ts";
 
 interface State {
   session: {
@@ -11,16 +12,29 @@ export async function handler(
   req: Request,
   ctx: MiddlewareHandlerContext<State>,
 ) {
-  // Public routes that don't require authentication
-  const publicPaths = ["/", "/login", "/api/auth/login", "/api/auth/callback"];
   const url = new URL(req.url);
+  
+  // Public routes and assets that don't require authentication
+  const publicPaths = [
+    "/",
+    "/login",
+    "/register",
+    "/api/auth/login",
+    "/api/auth/callback",
+  ];
+
+  // Allow access to Fresh's internal routes and static assets
+  if (url.pathname.startsWith("/_frsh/") || url.pathname.startsWith("/static/")) {
+    return await ctx.next();
+  }
   
   if (publicPaths.includes(url.pathname)) {
     return await ctx.next();
   }
 
   // Check authentication
-  const isAuthenticated = await kindeClient.isAuthenticated();
+  const sessionManager = createSessionManager();
+  const isAuthenticated = await kindeClient.isAuthenticated(sessionManager);
 
   if (!isAuthenticated) {
     return new Response(null, {

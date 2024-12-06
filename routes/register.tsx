@@ -13,7 +13,6 @@ export default function RegisterPage() {
     <>
       <Head>
         <title>Register - Cyber Clock</title>
-        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
       </Head>
       <div class="min-h-screen hero bg-base-200">
         <div class="hero-content flex-col w-full max-w-md">

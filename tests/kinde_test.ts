@@ -1,4 +1,4 @@
-import { assertEquals, assertExists } from "std/assert";
+import { assertEquals, assertExists } from "$std/assert/mod.ts";
 import { kindeClient } from "../utils/kinde.ts";
 import { createSessionManager } from "../utils/session.ts";
 import { setupTestEnv, cleanupTestEnv } from "./test_env.ts";

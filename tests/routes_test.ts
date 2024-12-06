@@ -1,4 +1,4 @@
-import { assertEquals } from "std/assert";
+import { assertEquals } from "$std/assert/mod.ts";
 import { type FreshContext } from "$fresh/server.ts";
 import { setupTestEnv, cleanupTestEnv, testEnv } from "./test_env.ts";
 

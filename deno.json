@@ -4,11 +4,10 @@
     "check": "deno fmt --check && deno lint && deno check **/*.ts && deno check **/*.tsx",
     "cli": "echo \"import '\\$fresh/src/dev/cli.ts'\" | deno run --unstable -A -",
     "manifest": "deno task cli manifest $(pwd)",
-    "start": "deno run --allow-env --allow-read --allow-write --allow-run --allow-sys --allow-net --unstable-kv --watch=static/,routes/ dev.ts",
-    "build": "deno run --allow-env --allow-read --allow-write --allow-net --unstable-kv dev.ts build",
-    "preview": "deno run --allow-env --allow-read --allow-write --allow-net --unstable-kv main.ts",
-    "update": "deno run -A -r https://fresh.deno.dev/update .",
-    "test": "deno test --allow-env --allow-read --allow-net"
+    "start": "deno run -A --watch=static/,routes/ dev.ts",
+    "build": "deno run -A dev.ts build",
+    "preview": "deno run -A main.ts",
+    "update": "deno run -A -r https://fresh.deno.dev/update ."
   },
   "lint": {
     "rules": {
@@ -27,16 +26,12 @@
     "preact/": "https://esm.sh/preact@10.22.0/",
     "@preact/signals": "https://esm.sh/*@preact/signals@1.2.2",
     "@preact/signals-core": "https://esm.sh/*@preact/signals-core@1.5.1",
-    "@material/": "https://esm.sh/@material/",
-    "preact-material-components": "https://esm.sh/preact-material-components@1.6.1",
-    "@kinde-oss/kinde-typescript-sdk": "npm:@kinde-oss/kinde-typescript-sdk@2.9.1",
-    "std/": "https://deno.land/std@0.216.0/",
-    "std/assert": "https://deno.land/std@0.216.0/assert/mod.ts",
-    "std/dotenv": "https://deno.land/std@0.216.0/dotenv/mod.ts",
     "tailwindcss": "npm:tailwindcss@3.4.1",
     "tailwindcss/": "npm:/tailwindcss@3.4.1/",
     "tailwindcss/plugin": "npm:/tailwindcss@3.4.1/plugin.js",
-    "daisyui": "npm:daisyui@^4.12.14"
+    "$std/": "https://deno.land/std@0.216.0/",
+    "std/": "https://deno.land/std@0.216.0/",
+    "@kinde-oss/kinde-typescript-sdk": "npm:@kinde-oss/kinde-typescript-sdk@2.9.1"
   },
   "compilerOptions": {
     "jsx": "react-jsx",
