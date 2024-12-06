@@ -1,6 +1,6 @@
 import { Head } from "$fresh/runtime.ts";
 import { Handlers, PageProps } from "$fresh/server.ts";
-import { getUserProfile } from "../utils/kinde.ts";
+import { kindeClient } from "../utils/kinde.ts";
 
 interface DashboardProps {
   user: {
@@ -13,21 +13,12 @@ interface DashboardProps {
 
 export const handler: Handlers<DashboardProps> = {
   async GET(_req, ctx) {
-    const session = ctx.state.session;
-    if (!session) {
-      return new Response("", {
-        status: 302,
-        headers: { Location: "/login" },
-      });
-    }
-
     try {
-      // Get fresh user profile from Kinde
-      const userProfile = await getUserProfile(session.accessToken);
-      return ctx.render({ user: userProfile });
+      const user = await kindeClient.getUser();
+      return ctx.render({ user });
     } catch (error) {
       console.error("Failed to get user profile:", error);
-      return new Response("", {
+      return new Response(null, {
         status: 302,
         headers: { Location: "/login" },
       });
