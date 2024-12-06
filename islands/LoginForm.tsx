@@ -1,52 +1,20 @@
 import { useState } from "preact/hooks";
-import { AuthConnection } from "../types/connections.ts";
-import { handleSocialLogin, handlePasswordlessLogin, getAuthMethods } from "../utils/frontend-auth.ts";
-import { Chrome, Facebook, Apple, Twitter, Mail, User, Loader2 } from "lucide/dist/esm/icons";
+import { Mail, Loader2 } from "lucide-react";
 
 export default function LoginForm() {
-  const [identifier, setIdentifier] = useState("");
-  const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const authMethods = getAuthMethods();
+  const [error, setError] = useState("");
 
-  const handleSocialAuth = async (connection: AuthConnection) => {
+  const handleLogin = async () => {
     try {
       setIsLoading(true);
-      const authUrl = await handleSocialLogin(connection);
-      globalThis.location.href = authUrl;
+      const response = await fetch("/api/auth/login");
+      const { url } = await response.json();
+      globalThis.location.href = url;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to initialize login");
       setIsLoading(false);
     }
-  };
-
-  const handlePasswordlessAuth = async (e: Event, connection: AuthConnection.EMAIL_CODE | AuthConnection.USERNAME_CODE) => {
-    e.preventDefault();
-    if (!identifier) {
-      setError("Please enter your email or username");
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      const authUrl = await handlePasswordlessLogin(identifier, connection);
-      globalThis.location.href = authUrl;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to initialize login");
-      setIsLoading(false);
-    }
-  };
-
-  const getIconComponent = (iconName: string) => {
-    const icons = {
-      Chrome,
-      Facebook,
-      Apple,
-      Twitter,
-      Mail,
-      User,
-    };
-    return icons[iconName as keyof typeof icons];
   };
 
   return (
@@ -66,91 +34,18 @@ export default function LoginForm() {
             )}
 
             <div class="space-y-6">
-              {/* Social Login Buttons */}
-              <div class="grid grid-cols-2 gap-4">
-                {authMethods
-                  .filter(method => 
-                    [AuthConnection.GOOGLE, AuthConnection.FACEBOOK, AuthConnection.APPLE, AuthConnection.X]
-                    .includes(method.type as AuthConnection)
-                  )
-                  .map(method => {
-                    const Icon = getIconComponent(method.icon);
-                    return (
-                      <button
-                        key={method.id}
-                        onClick={() => handleSocialAuth(method.type)}
-                        disabled={isLoading}
-                        class="btn btn-outline gap-2"
-                      >
-                        {Icon && <Icon size={20} />}
-                        {method.name}
-                      </button>
-                    );
-                  })}
-              </div>
-
-              <div class="divider">OR</div>
-
-              {/* Passwordless Login Forms */}
-              <div class="space-y-4">
-                {/* Email Code Login */}
-                <form onSubmit={(e) => handlePasswordlessAuth(e, AuthConnection.EMAIL_CODE)}>
-                  <div class="form-control">
-                    <label class="input-group">
-                      <span><Mail size={20} /></span>
-                      <input
-                        type="email"
-                        placeholder="Email address"
-                        value={identifier}
-                        onChange={(e) => setIdentifier(e.currentTarget.value)}
-                        disabled={isLoading}
-                        class="input input-bordered w-full"
-                      />
-                    </label>
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    class="btn btn-primary w-full mt-4"
-                  >
-                    {isLoading ? (
-                      <Loader2 size={20} className="animate-spin mr-2" />
-                    ) : (
-                      <Mail size={20} className="mr-2" />
-                    )}
-                    Continue with Email
-                  </button>
-                </form>
-
-                {/* Username Code Login */}
-                <form onSubmit={(e) => handlePasswordlessAuth(e, AuthConnection.USERNAME_CODE)}>
-                  <div class="form-control">
-                    <label class="input-group">
-                      <span><User size={20} /></span>
-                      <input
-                        type="text"
-                        placeholder="Username"
-                        value={identifier}
-                        onChange={(e) => setIdentifier(e.currentTarget.value)}
-                        disabled={isLoading}
-                        class="input input-bordered w-full"
-                      />
-                    </label>
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    class="btn btn-secondary w-full mt-4"
-                  >
-                    {isLoading ? (
-                      <Loader2 size={20} className="animate-spin mr-2" />
-                    ) : (
-                      <User size={20} className="mr-2" />
-                    )}
-                    Continue with Username
-                  </button>
-                </form>
-              </div>
+              <button
+                onClick={handleLogin}
+                disabled={isLoading}
+                class="btn btn-primary w-full"
+              >
+                {isLoading ? (
+                  <Loader2 size={20} className="animate-spin mr-2" />
+                ) : (
+                  <Mail size={20} className="mr-2" />
+                )}
+                Continue with Kinde
+              </button>
             </div>
           </div>
         </div>

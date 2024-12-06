@@ -24,14 +24,14 @@ const cyberpunkTheme = {
   "--tab-radius": "0",
 };
 
-export default {
+const config: Config = {
   content: [
     "{routes,islands,components}/**/*.{ts,tsx}",
   ],
   theme: {
     extend: {},
   },
-  plugins: [daisyui],
+  plugins: [daisyui as unknown as Config["plugins"][number]],
   daisyui: {
     themes: [{
       cyberpunk: cyberpunkTheme,
@@ -42,4 +42,6 @@ export default {
     utils: true,
     logs: false,
   },
-} as Config;
+};
+
+export default config;
