@@ -1,4 +1,5 @@
 import { SessionManager } from "@kinde-oss/kinde-typescript-sdk";
+import { crypto } from "$std/crypto/mod.ts";
 
 interface Tokens {
   accessToken: string;
@@ -6,7 +7,52 @@ interface Tokens {
   idToken: string;
 }
 
+interface Session {
+  userId: string;
+  email: string;
+  expiresAt: number;
+  rememberMe: boolean;
+}
+
 const kv = await Deno.openKv();
+
+// Cookie options
+export const COOKIE_NAME = "cyber_session";
+export const SESSION_LENGTH = 24 * 60 * 60 * 1000; // 24 hours
+export const EXTENDED_SESSION = 14 * 24 * 60 * 60 * 1000; // 14 days
+
+export async function createSession(userId: string, email: string, rememberMe = false): Promise<string> {
+  const sessionId = crypto.randomUUID();
+  const session: Session = {
+    userId,
+    email,
+    expiresAt: Date.now() + (rememberMe ? EXTENDED_SESSION : SESSION_LENGTH),
+    rememberMe,
+  };
+
+  await kv.set(["sessions", sessionId], session, { 
+    expireIn: rememberMe ? EXTENDED_SESSION : SESSION_LENGTH 
+  });
+
+  return sessionId;
+}
+
+export async function getSession(sessionId: string): Promise<Session | null> {
+  const result = await kv.get<Session>(["sessions", sessionId]);
+  if (!result.value) return null;
+  
+  // Check if session is expired
+  if (result.value.expiresAt < Date.now()) {
+    await kv.delete(["sessions", sessionId]);
+    return null;
+  }
+
+  return result.value;
+}
+
+export async function deleteSession(sessionId: string) {
+  await kv.delete(["sessions", sessionId]);
+}
 
 // Create a session manager that uses KV for persistence
 export function createSessionManager(): SessionManager {

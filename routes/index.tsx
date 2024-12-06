@@ -23,10 +23,15 @@ export default function HomePage() {
             <p class="py-6 text-base-content/60">
               Modern time management for the digital age
             </p>
-            <a href="/login" class="btn btn-primary gap-2">
-              <span class="material-icons">login</span>
-              Get Started
-            </a>
+            <div class="space-y-4">
+              <a href="/login?remember=true" class="btn btn-primary gap-2 w-full">
+                <span class="material-icons">login</span>
+                Get Started
+              </a>
+              <div class="text-sm text-base-content/60">
+                By clicking "Get Started", you'll stay logged in for 14 days
+              </div>
+            </div>
           </div>
         </div>
       </div>
