@@ -1,4 +1,11 @@
-## Golden Rule: Data Flow Pattern
+## Golden Rule: ALWAYS USE FRESH BUILT-IN SOLUTIONS FIRST
+
+### Route Protection
+1. Use Fresh handlers for auth/protection
+2. Use Fresh layouts for shared auth logic
+3. Use Fresh state injection when needed
+4. Only if Fresh can't do it, consider Hono
+5. NEVER roll custom middleware unless explicitly required
 
 ### Write Operations
 1. Validate input against TypeScript interfaces
@@ -9,7 +16,7 @@
 6. Client renders UI update
 
 ### Read Operations
-1. Check permissions
+1. Use Fresh handlers for permission checks
 2. Query KV store
 3. Transform to TypeScript types
 4. Return JSON response

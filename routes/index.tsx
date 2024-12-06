@@ -11,20 +11,20 @@ export default function HomePage() {
   return (
     <>
       <Head>
-        <title>Cyber Clock - Time Management</title>
+        <title>Cyber - Time Management</title>
       </Head>
-      <div class="min-h-screen bg-gray-100">
-        <div class="flex flex-col items-center justify-center h-full text-center">
-          <div class="max-w-md p-8">
-            <h1 class="text-5xl font-bold text-blue-600 flex items-center justify-center gap-4">
+      <div class="min-h-screen hero bg-base-200">
+        <div class="hero-content flex-col text-center">
+          <div class="max-w-md">
+            <h1 class="text-5xl font-bold text-primary flex items-center justify-center gap-4">
               <span class="material-icons text-5xl">schedule</span>
-              Cyber Clock
+              Cyber
             </h1>
-            <p class="py-6 text-gray-600">
-              Modern time management for the digital age. Track your time, boost productivity, and achieve more.
+            <p class="py-6 text-base-content/60">
+              Modern time management for the digital age
             </p>
-            <a href="/login" class="inline-flex items-center px-6 py-3 text-white bg-blue-600 rounded-lg hover:bg-blue-700">
-              <span class="material-icons mr-2">login</span>
+            <a href="/login" class="btn btn-primary gap-2">
+              <span class="material-icons">login</span>
               Get Started
             </a>
           </div>
