@@ -1,5 +1,4 @@
 import { useState } from "preact/hooks";
-import { Mail, Loader2 } from "lucide-react";
 
 export default function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
@@ -40,9 +39,9 @@ export default function LoginForm() {
                 class="btn btn-primary w-full"
               >
                 {isLoading ? (
-                  <Loader2 size={20} className="animate-spin mr-2" />
+                  <span class="loading loading-spinner loading-md mr-2" />
                 ) : (
-                  <Mail size={20} className="mr-2" />
+                  <span class="material-icons mr-2">email</span>
                 )}
                 Continue with Kinde
               </button>

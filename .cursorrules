@@ -18,3 +18,50 @@
 #### TECH stack
 Deno 2
 Fresh 1.7.3
+DaisyUI 4.12.14
+Material Icons (Google Fonts)
+
+#### Common Issues & Solutions
+1. Icon Libraries:
+   - Use Material Icons from Google Fonts CDN
+   - Add stylesheet link in Head: `<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />`
+   - Use with span elements: `<span class="material-icons">icon_name</span>`
+   - Common icons: schedule, login, email, person_add
+
+2. Client-Side Components:
+   - Use islands for any component with client-side logic
+   - Move event handlers and state to island components
+   - Keep route components purely server-side
+   - Example structure:
+     ```tsx
+     // routes/page.tsx (server component)
+     import MyButton from "../islands/MyButton.tsx";
+     
+     export default function Page() {
+       return <MyButton />;
+     }
+
+     // islands/MyButton.tsx (client component)
+     import { useState } from "preact/hooks";
+
+     export default function MyButton() {
+       const [state, setState] = useState();
+       const handleClick = () => {};
+       return <button onClick={handleClick}>Click</button>;
+     }
+     ```
+
+3. NPM Compatibility:
+   - Keep nodeModulesDir as "auto" in deno.json
+   - Use npm: prefix for npm packages in import map
+   - Deno 2 has full npm compatibility
+
+4. Environment:
+   - Always load .env using std/dotenv
+   - Use proper import paths (std/dotenv/load.ts)
+   - Test environment variables separately from main app
+
+5. Browser APIs:
+   - Use globalThis instead of window
+   - Example: `globalThis.location.href = url`
+   - Keep browser API calls in island components

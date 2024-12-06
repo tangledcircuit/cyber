@@ -23,18 +23,20 @@
   ],
   "imports": {
     "$fresh/": "https://deno.land/x/fresh@1.7.3/",
-    "@kinde-oss/kinde-typescript-sdk": "npm:@kinde-oss/kinde-typescript-sdk@^2.9.1",
-    "daisyui": "npm:daisyui@^4.12.14",
-    "lucide-react": "https://esm.sh/lucide-react@0.468.0",
     "preact": "https://esm.sh/preact@10.22.0",
     "preact/": "https://esm.sh/preact@10.22.0/",
     "@preact/signals": "https://esm.sh/*@preact/signals@1.2.2",
     "@preact/signals-core": "https://esm.sh/*@preact/signals-core@1.5.1",
+    "@material/": "https://esm.sh/@material/",
+    "preact-material-components": "https://esm.sh/preact-material-components@1.6.1",
+    "@kinde-oss/kinde-typescript-sdk": "npm:@kinde-oss/kinde-typescript-sdk@2.9.1",
     "std/": "https://deno.land/std@0.216.0/",
     "std/assert": "https://deno.land/std@0.216.0/assert/mod.ts",
+    "std/dotenv": "https://deno.land/std@0.216.0/dotenv/mod.ts",
     "tailwindcss": "npm:tailwindcss@3.4.1",
     "tailwindcss/": "npm:/tailwindcss@3.4.1/",
-    "tailwindcss/plugin": "npm:/tailwindcss@3.4.1/plugin.js"
+    "tailwindcss/plugin": "npm:/tailwindcss@3.4.1/plugin.js",
+    "daisyui": "npm:daisyui@^4.12.14"
   },
   "compilerOptions": {
     "jsx": "react-jsx",

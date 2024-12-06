@@ -12,8 +12,12 @@ import * as $api_logout from "./routes/api/logout.ts";
 import * as $dashboard from "./routes/dashboard.tsx";
 import * as $greet_name_ from "./routes/greet/[name].tsx";
 import * as $index from "./routes/index.tsx";
+import * as $login from "./routes/login.tsx";
+import * as $register from "./routes/register.tsx";
 import * as $Counter from "./islands/Counter.tsx";
+import * as $LoginButton from "./islands/LoginButton.tsx";
 import * as $LoginForm from "./islands/LoginForm.tsx";
+import * as $RegisterButton from "./islands/RegisterButton.tsx";
 import type { Manifest } from "$fresh/server.ts";
 
 const manifest = {
@@ -28,10 +32,14 @@ const manifest = {
     "./routes/dashboard.tsx": $dashboard,
     "./routes/greet/[name].tsx": $greet_name_,
     "./routes/index.tsx": $index,
+    "./routes/login.tsx": $login,
+    "./routes/register.tsx": $register,
   },
   islands: {
     "./islands/Counter.tsx": $Counter,
+    "./islands/LoginButton.tsx": $LoginButton,
     "./islands/LoginForm.tsx": $LoginForm,
+    "./islands/RegisterButton.tsx": $RegisterButton,
   },
   baseUrl: import.meta.url,
 } satisfies Manifest;
