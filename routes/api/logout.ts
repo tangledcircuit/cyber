@@ -1,9 +1,10 @@
 import { Handlers } from "$fresh/server.ts";
-import { kindeClient } from "../../utils/kinde.ts";
 
 export const handler: Handlers = {
   async GET(_req) {
-    const logoutUrl = await kindeClient.getLogoutURL();
+    const logoutUrl = new URL(`https://${Deno.env.get("KINDE_BACKEND_DOMAIN")}/logout`);
+    logoutUrl.searchParams.set("redirect", Deno.env.get("KINDE_BACKEND_POST_LOGOUT_REDIRECT_URI")!);
+
     return new Response(null, {
       status: 302,
       headers: { Location: logoutUrl.toString() },

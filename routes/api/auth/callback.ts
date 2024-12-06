@@ -1,5 +1,6 @@
 import { createKindeServerClient, GrantType } from "@kinde-oss/kinde-typescript-sdk";
 import { Handlers } from "$fresh/server.ts";
+import { createSessionManager } from "../../../utils/session.ts";
 
 const kindeClient = createKindeServerClient(
   GrantType.PKCE,
@@ -14,7 +15,7 @@ const kindeClient = createKindeServerClient(
 export const handler: Handlers = {
   async GET(req) {
     const url = new URL(req.url);
-    const sessionManager = await kindeClient.createSessionManager();
+    const sessionManager = createSessionManager();
     await kindeClient.handleRedirectToApp(sessionManager, url);
     
     // Redirect to dashboard after successful auth
