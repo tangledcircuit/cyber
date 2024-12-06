@@ -6,37 +6,53 @@ interface Tokens {
   idToken: string;
 }
 
-// Create a simple session manager that stores tokens in memory
+const kv = await Deno.openKv();
+
+// Create a session manager that uses KV for persistence
 export function createSessionManager(): SessionManager {
-  let tokens: Tokens = {
-    accessToken: "",
-    refreshToken: "",
-    idToken: "",
-  };
-
-  const sessionItems = new Map<string, string>();
-
   return {
-    getAccessToken: () => Promise.resolve(tokens.accessToken),
-    getRefreshToken: () => Promise.resolve(tokens.refreshToken),
-    getIdToken: () => Promise.resolve(tokens.idToken),
-    setTokens: (newTokens: Tokens) => {
-      tokens = newTokens;
-      return Promise.resolve();
+    getAccessToken: async () => {
+      const result = await kv.get<Tokens>(["auth_tokens"]);
+      return result.value?.accessToken ?? "";
     },
-    getSessionItem: (key: string) => Promise.resolve(sessionItems.get(key) ?? null),
-    setSessionItem: (key: string, value: string) => {
-      sessionItems.set(key, value);
-      return Promise.resolve();
+    getRefreshToken: async () => {
+      const result = await kv.get<Tokens>(["auth_tokens"]);
+      return result.value?.refreshToken ?? "";
     },
-    removeSessionItem: (key: string) => {
-      sessionItems.delete(key);
-      return Promise.resolve();
+    getIdToken: async () => {
+      const result = await kv.get<Tokens>(["auth_tokens"]);
+      return result.value?.idToken ?? "";
     },
-    destroySession: () => {
-      tokens = { accessToken: "", refreshToken: "", idToken: "" };
-      sessionItems.clear();
-      return Promise.resolve();
+    setTokens: async (newTokens: Tokens) => {
+      await kv.atomic()
+        .set(["auth_tokens"], newTokens)
+        .commit();
+    },
+    getSessionItem: async (key: string) => {
+      const result = await kv.get<string>(["session_items", key]);
+      return result.value ?? null;
+    },
+    setSessionItem: async (key: string, value: string) => {
+      await kv.atomic()
+        .set(["session_items", key], value, { expireIn: 600000 }) // 10 minutes
+        .commit();
+    },
+    removeSessionItem: async (key: string) => {
+      await kv.atomic()
+        .delete(["session_items", key])
+        .commit();
+    },
+    destroySession: async () => {
+      const atomic = kv.atomic();
+      atomic.delete(["auth_tokens"]);
+      
+      // Get all session items and delete them
+      const sessionItems = kv.list({ prefix: ["session_items"] });
+      for await (const item of sessionItems) {
+        atomic.delete(item.key);
+      }
+      
+      await atomic.commit();
     },
   } as unknown as SessionManager;
 } 

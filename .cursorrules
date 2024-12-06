@@ -1,11 +1,26 @@
 ## Golden Rule: ALWAYS USE FRESH BUILT-IN SOLUTIONS FIRST
 
+### DO NOT MAKE THINGS UP
+1. If you don't know something, admit it
+2. Search documentation or the web for answers
+3. Ask for clarification if needed
+4. NEVER guess or invent solutions
+5. Show your sources when providing solutions
+
 ### Route Protection
 1. Use Fresh handlers for auth/protection
 2. Use Fresh layouts for shared auth logic
 3. Use Fresh state injection when needed
 4. Only if Fresh can't do it, consider Hono
 5. NEVER roll custom middleware unless explicitly required
+
+### Authentication (ALWAYS USE KINDE SDK)
+1. ALWAYS use Kinde SDK methods directly
+2. NEVER build auth URLs manually
+3. NEVER handle auth state manually
+4. Let Kinde handle all social logins
+5. Use Kinde's built-in UI for login/register
+6. Only customize auth UI when absolutely required
 
 ### Write Operations
 1. Validate input against TypeScript interfaces
