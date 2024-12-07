@@ -3,8 +3,14 @@ import { Handlers } from "$fresh/server.ts";
 import { kindeClient } from "../../utils/kinde.ts";
 import { createSessionManager } from "../../utils/session.ts";
 
+interface User {
+  id: string;
+  given_name?: string;
+  email?: string;
+}
+
 export const handler: Handlers = {
-  async GET(req, ctx) {
+  async GET(_req, ctx) {
     const sessionManager = createSessionManager();
     const isAuthenticated = await kindeClient.isAuthenticated(sessionManager);
     
@@ -20,7 +26,7 @@ export const handler: Handlers = {
   },
 };
 
-export default function DashboardPage({ data }: { data: { user: any } }) {
+export default function DashboardPage({ data }: { data: { user: User } }) {
   const { user } = data;
   
   return (
