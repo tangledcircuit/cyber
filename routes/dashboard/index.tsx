@@ -2,6 +2,10 @@ import { Head } from "$fresh/runtime.ts";
 import { Handlers } from "$fresh/server.ts";
 import { kindeClient } from "../../utils/kinde.ts";
 import { createSessionManager } from "../../utils/session.ts";
+import { getUserTokens } from "../../utils/stripe.ts";
+import Header from "../../islands/Header.tsx";
+
+const kv = await Deno.openKv();
 
 interface User {
   id: string;
@@ -9,8 +13,14 @@ interface User {
   email?: string;
 }
 
-export const handler: Handlers = {
-  async GET(_req, ctx) {
+interface DashboardData {
+  user: User;
+  tokens: number;
+  paymentStatus?: "success" | "cancelled";
+}
+
+export const handler: Handlers<DashboardData> = {
+  async GET(req, ctx) {
     const sessionManager = createSessionManager();
     const isAuthenticated = await kindeClient.isAuthenticated(sessionManager);
     
@@ -22,12 +32,20 @@ export const handler: Handlers = {
     }
 
     const user = await kindeClient.getUser(sessionManager);
-    return ctx.render({ user });
+    if (!user?.id) {
+      return new Response("User not found", { status: 404 });
+    }
+
+    const tokens = await getUserTokens(kv, user.id);
+    const url = new URL(req.url);
+    const paymentStatus = url.searchParams.get("payment") as "success" | "cancelled" | undefined;
+
+    return ctx.render({ user, tokens, paymentStatus });
   },
 };
 
-export default function DashboardPage({ data }: { data: { user: User } }) {
-  const { user } = data;
+export default function DashboardPage({ data }: { data: DashboardData }) {
+  const { user, tokens, paymentStatus } = data;
   
   return (
     <>
@@ -35,26 +53,7 @@ export default function DashboardPage({ data }: { data: { user: User } }) {
         <title>Dashboard - Cyber</title>
       </Head>
       <div class="min-h-screen bg-base-200">
-        <div class="navbar bg-base-100">
-          <div class="flex-1">
-            <a class="btn btn-ghost text-xl">Cyber</a>
-          </div>
-          <div class="flex-none gap-2">
-            <div class="dropdown dropdown-end">
-              <div tabIndex={0} role="button" class="btn btn-ghost btn-circle avatar">
-                <span class="material-icons">account_circle</span>
-              </div>
-              <ul tabIndex={0} class="mt-3 z-[1] p-2 shadow menu menu-sm dropdown-content bg-base-100 rounded-box w-52">
-                <li>
-                  <a href="/api/logout">
-                    <span class="material-icons">logout</span>
-                    Logout
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
+        <Header user={user} tokens={tokens} />
 
         <div class="p-4">
           <div class="text-sm breadcrumbs">
@@ -66,8 +65,30 @@ export default function DashboardPage({ data }: { data: { user: User } }) {
             </ul>
           </div>
 
+          {paymentStatus === "success" && (
+            <div class="alert alert-success mb-4">
+              <span class="material-icons">check_circle</span>
+              Payment successful! Your tokens have been added.
+            </div>
+          )}
+
+          {paymentStatus === "cancelled" && (
+            <div class="alert alert-warning mb-4">
+              <span class="material-icons">warning</span>
+              Payment cancelled. No tokens were purchased.
+            </div>
+          )}
+
           <div class="mt-6">
             <h1 class="text-2xl font-bold">Welcome, {user?.given_name || "User"}!</h1>
+            
+            <div class="stats shadow mt-4">
+              <div class="stat">
+                <div class="stat-title">Your Tokens</div>
+                <div class="stat-value">{tokens}</div>
+                <div class="stat-desc">Available to use</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
