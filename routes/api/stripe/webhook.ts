@@ -1,5 +1,10 @@
 import { Handlers } from "$fresh/server.ts";
-import { handleWebhook, addTokensToUser } from "../../../utils/stripe.ts";
+import { completePurchase } from "../../../utils/stripe.ts";
+import Stripe from "npm:stripe";
+
+const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
+  apiVersion: "2023-10-16",
+});
 
 const kv = await Deno.openKv();
 
@@ -7,47 +12,37 @@ export const handler: Handlers = {
   async POST(req) {
     const signature = req.headers.get("stripe-signature");
     if (!signature) {
-      console.error("Webhook error: Missing stripe-signature header");
+      console.error("Webhook: Missing signature");
       return new Response("No signature", { status: 400 });
     }
 
     try {
+      console.log("Webhook: Processing request");
       const payload = await req.text();
-      console.log("Received webhook event:", payload.slice(0, 100) + "...");
+      console.log("Webhook: Received payload:", payload.slice(0, 100) + "...");
       
-      const event = await handleWebhook(payload, signature);
-      console.log("Webhook event type:", event.type);
+      const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET")!;
+      const event = await stripe.webhooks.constructEventAsync(
+        payload,
+        signature,
+        webhookSecret
+      );
+      console.log("Webhook: Event verified:", event.type);
 
-      switch (event.type) {
-        case "checkout.session.completed": {
-          const session = event.data.object;
-          console.log("Processing checkout session:", session.id);
-          
-          const userId = session.metadata?.userId;
-          const tokenAmount = parseInt(session.metadata?.amount || "0");
-
-          if (!userId || !tokenAmount) {
-            console.error("Missing metadata:", { userId, tokenAmount });
-            return new Response("Invalid metadata", { status: 400 });
-          }
-
-          if (session.metadata?.type === "tokens") {
-            await addTokensToUser(kv, userId, tokenAmount);
-            console.log(`Added ${tokenAmount} tokens to user ${userId}`);
-          }
-          break;
-        }
+      // Handle successful payments
+      if (event.type === "checkout.session.completed") {
+        const session = event.data.object;
+        console.log("Webhook: Processing completed checkout:", session.id);
         
-        case "charge.succeeded":
-        case "payment_intent.succeeded":
-        case "payment_intent.created":
-        case "charge.updated":
-          // Log but don't process these events
-          console.log(`Acknowledged ${event.type} event:`, event.id);
-          break;
-          
-        default:
-          console.warn("Unhandled event type:", event.type);
+        const purchaseId = session.metadata?.purchaseId;
+        if (!purchaseId) {
+          console.error("Webhook: Missing purchaseId in metadata");
+          return new Response("Missing purchaseId", { status: 400 });
+        }
+
+        console.log(`Webhook: Completing purchase ${purchaseId}`);
+        await completePurchase(kv, purchaseId);
+        console.log(`Webhook: Purchase completed`);
       }
 
       return new Response("OK", { status: 200 });

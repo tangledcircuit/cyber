@@ -11,6 +11,7 @@ import * as $api_joke from "./routes/api/joke.ts";
 import * as $api_logout from "./routes/api/logout.ts";
 import * as $api_stripe_checkout from "./routes/api/stripe/checkout.ts";
 import * as $api_stripe_webhook from "./routes/api/stripe/webhook.ts";
+import * as $api_tokens_watch from "./routes/api/tokens/watch.ts";
 import * as $dashboard from "./routes/dashboard.tsx";
 import * as $dashboard_index from "./routes/dashboard/index.tsx";
 import * as $greet_name_ from "./routes/greet/[name].tsx";
@@ -34,6 +35,7 @@ const manifest = {
     "./routes/api/logout.ts": $api_logout,
     "./routes/api/stripe/checkout.ts": $api_stripe_checkout,
     "./routes/api/stripe/webhook.ts": $api_stripe_webhook,
+    "./routes/api/tokens/watch.ts": $api_tokens_watch,
     "./routes/dashboard.tsx": $dashboard,
     "./routes/dashboard/index.tsx": $dashboard_index,
     "./routes/greet/[name].tsx": $greet_name_,

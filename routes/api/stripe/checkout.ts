@@ -1,7 +1,9 @@
 import { Handlers } from "$fresh/server.ts";
-import { createCheckoutSession } from "../../../utils/stripe.ts";
+import { createPurchase } from "../../../utils/stripe.ts";
 import { kindeClient } from "../../../utils/kinde.ts";
 import { createSessionManager } from "../../../utils/session.ts";
+
+const kv = await Deno.openKv();
 
 export const handler: Handlers = {
   async POST(req) {
@@ -14,10 +16,10 @@ export const handler: Handlers = {
     }
 
     try {
-      const { quantity } = await req.json();
+      const { hours } = await req.json();
       
-      if (!quantity || quantity < 1) {
-        return new Response("Invalid quantity", { status: 400 });
+      if (!hours || hours < 1) {
+        return new Response("Invalid hours", { status: 400 });
       }
 
       const user = await kindeClient.getUser(sessionManager);
@@ -25,14 +27,15 @@ export const handler: Handlers = {
         return new Response("User not found", { status: 404 });
       }
 
-      const session = await createCheckoutSession(
+      const url = await createPurchase(
+        kv,
         user.id,
-        quantity,
+        hours,
         `${new URL(req.url).origin}/dashboard?payment=success`,
         `${new URL(req.url).origin}/dashboard?payment=cancelled`,
       );
 
-      return new Response(JSON.stringify({ url: session.url }), {
+      return new Response(JSON.stringify({ url }), {
         headers: { "Content-Type": "application/json" },
       });
     } catch (err: unknown) {

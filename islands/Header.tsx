@@ -1,14 +1,49 @@
+import { useEffect, useState } from "preact/hooks";
 import PurchaseModal from "./PurchaseModal.tsx";
 
 interface HeaderProps {
   user: {
     given_name?: string;
     email?: string;
+    id?: string;
   };
   tokens: number;
 }
 
-export default function Header({ user, tokens }: HeaderProps) {
+export default function Header({ user, tokens: initialTokens }: HeaderProps) {
+  const [tokens, setTokens] = useState(initialTokens);
+
+  useEffect(() => {
+    if (!user.id) return;
+
+    console.log("Client: Setting up SSE connection");
+    
+    // Connect to SSE endpoint
+    const eventSource = new EventSource(`/api/tokens/watch?userId=${user.id}`);
+    
+    // Connection status handlers
+    eventSource.onopen = () => {
+      console.log("Client: SSE connection opened");
+    };
+
+    eventSource.onerror = (error) => {
+      console.error("Client: SSE connection error:", error);
+    };
+    
+    // Listen for token updates
+    eventSource.onmessage = (event) => {
+      const newTokens = parseInt(event.data);
+      console.log(`Client: Received token update: ${newTokens}`);
+      setTokens(newTokens);
+    };
+
+    // Clean up on unmount
+    return () => {
+      console.log("Client: Closing SSE connection");
+      eventSource.close();
+    };
+  }, [user.id]);
+
   return (
     <div class="navbar bg-base-100">
       <div class="flex-1">

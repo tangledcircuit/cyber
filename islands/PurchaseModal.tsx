@@ -1,10 +1,18 @@
-import { useState } from "preact/hooks";
+import { useState, useEffect } from "preact/hooks";
 import { TOKEN_PRODUCT } from "../utils/stripe.ts";
 
 export default function PurchaseModal() {
   const [isOpen, setIsOpen] = useState(false);
-  const [quantity, setQuantity] = useState(1);
+  const [hours, setHours] = useState<number>(TOKEN_PRODUCT.minHours);
   const [isLoading, setIsLoading] = useState(false);
+  const [totalTokens, setTotalTokens] = useState(TOKEN_PRODUCT.tokensPerHour * TOKEN_PRODUCT.minHours);
+  const [totalPrice, setTotalPrice] = useState(TOKEN_PRODUCT.price * TOKEN_PRODUCT.minHours);
+
+  // Update totals when hours change
+  useEffect(() => {
+    setTotalTokens(TOKEN_PRODUCT.tokensPerHour * hours);
+    setTotalPrice(TOKEN_PRODUCT.price * hours);
+  }, [hours]);
 
   const handlePurchase = async () => {
     try {
@@ -12,20 +20,23 @@ export default function PurchaseModal() {
       const response = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quantity }),
+        body: JSON.stringify({ hours }),
       });
+      
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error);
+      }
       
       const { url } = await response.json();
       if (url) globalThis.location.href = url;
     } catch (err) {
       console.error("Purchase error:", err);
-      alert("Failed to initiate purchase");
+      alert(err instanceof Error ? err.message : "Failed to initiate purchase");
     } finally {
       setIsLoading(false);
     }
   };
-
-  const totalPrice = (TOKEN_PRODUCT.price * quantity).toFixed(8);
 
   return (
     <>
@@ -34,30 +45,40 @@ export default function PurchaseModal() {
         class="btn btn-primary gap-2"
       >
         <span class="material-icons">shopping_cart</span>
-        Buy Tokens
+        Buy Time
       </button>
 
       {isOpen && (
         <div class="modal modal-open">
           <div class="modal-box">
-            <h3 class="font-bold text-lg">Purchase Tokens</h3>
+            <h3 class="font-bold text-lg">Purchase Computer Time</h3>
             <p class="py-4">
-              Tokens are {TOKEN_PRODUCT.price.toFixed(8)} {TOKEN_PRODUCT.currency.toUpperCase()} each
+              {TOKEN_PRODUCT.price.toFixed(2)} {TOKEN_PRODUCT.currency.toUpperCase()} per hour
+              <br />
+              <span class="text-sm opacity-75">Minimum purchase: {TOKEN_PRODUCT.minHours} hours</span>
             </p>
             
             <div class="form-control">
               <label class="label">
-                <span class="label-text">How many tokens would you like?</span>
+                <span class="label-text">How many hours would you like?</span>
               </label>
               <input
                 type="number"
-                min="1"
-                value={quantity}
-                onChange={(e) => setQuantity(parseInt(e.currentTarget.value) || 1)}
+                min={TOKEN_PRODUCT.minHours}
+                value={hours}
+                onChange={(e) => {
+                  const value = parseInt(e.currentTarget.value) || TOKEN_PRODUCT.minHours;
+                  setHours(Math.max(value, TOKEN_PRODUCT.minHours));
+                }}
                 class="input input-bordered"
               />
               <label class="label">
-                <span class="label-text-alt">Total: {totalPrice} {TOKEN_PRODUCT.currency.toUpperCase()}</span>
+                <span class="label-text-alt">
+                  {totalTokens.toLocaleString()} tokens
+                </span>
+                <span class="label-text-alt font-bold">
+                  Total: {totalPrice.toFixed(2)} {TOKEN_PRODUCT.currency.toUpperCase()}
+                </span>
               </label>
             </div>
 
