@@ -19,6 +19,7 @@ import * as $index from "./routes/index.tsx";
 import * as $login from "./routes/login.tsx";
 import * as $register from "./routes/register.tsx";
 import * as $Counter from "./islands/Counter.tsx";
+import * as $Dashboard from "./islands/Dashboard.tsx";
 import * as $Header from "./islands/Header.tsx";
 import * as $PurchaseButton from "./islands/PurchaseButton.tsx";
 import * as $PurchaseModal from "./islands/PurchaseModal.tsx";
@@ -45,6 +46,7 @@ const manifest = {
   },
   islands: {
     "./islands/Counter.tsx": $Counter,
+    "./islands/Dashboard.tsx": $Dashboard,
     "./islands/Header.tsx": $Header,
     "./islands/PurchaseButton.tsx": $PurchaseButton,
     "./islands/PurchaseModal.tsx": $PurchaseModal,
