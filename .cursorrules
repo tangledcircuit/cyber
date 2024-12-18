@@ -1,4 +1,26 @@
-## Golden Rule: ALWAYS USE FRESH BUILT-IN SOLUTIONS FIRST
+## Golden Rule: Data Flow Pattern
+
+### Write Operations
+1. Validate input against TypeScript interfaces
+2. Update KV store with new state
+3. Update global list/indices
+4. Broadcast changes via KV broadcast
+5. Return JSON response
+6. Client renders UI update
+
+### Read Operations
+1. Check permissions
+2. Query KV store
+3. Transform to TypeScript types
+4. Return JSON response
+5. Client renders UI
+
+### Payment Flow
+1. User initiates purchase -> Stripe Checkout
+2. Stripe Webhook confirms payment
+3. Store Stripe transaction in KV (Stripe is source of truth)
+4. KV broadcast notifies components
+5. Components update UI
 
 ### DO NOT MAKE THINGS UP
 1. If you don't know something, admit it
@@ -22,25 +44,20 @@
 5. Use Kinde's built-in UI for login/register
 6. Only customize auth UI when absolutely required
 
-### Write Operations
-1. Validate input against TypeScript interfaces
-2. Update KV store with new state
-3. Update global list/indices
-4. Broadcast changes via SSE
-5. Return JSON response
-6. Client renders UI update
-
-### Read Operations
-1. Use Fresh handlers for permission checks
-2. Query KV store
-3. Transform to TypeScript types
-4. Return JSON response
-5. Client renders UI
+### Browser APIs in Deno
+1. ALWAYS use globalThis instead of window
+2. NEVER use window.location, use globalThis.location
+3. NEVER use window.history, use globalThis.history
+4. NEVER use window.document, use globalThis.document
+5. NEVER use window.localStorage, use KV store instead
+6. NEVER use window.sessionStorage, use KV store instead
 
 #### TECH stack
 Deno 2
 Fresh 1.7.3
-DaisyUI 4.12.14
+Kinde Auth
+Indexeddb
+Daisy UI 4.12.14
 Material Icons (Google Fonts)
 
 #### Common Issues & Solutions

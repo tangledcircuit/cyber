@@ -1,5 +1,5 @@
 import { Handlers } from "$fresh/server.ts";
-import { decrementUserTokens } from "../../../utils/stripe.ts";
+import { decrementUserTokens, getUserTokens } from "../../../utils/stripe.ts";
 
 export const handler: Handlers = {
   async GET(req, _ctx) {
@@ -20,24 +20,20 @@ export const handler: Handlers = {
       new BroadcastChannel("token-updates") : 
       { postMessage: () => {}, close: () => {}, onmessage: null };
       
-    const kv = await Deno.openKv();
-    console.log("SSE: KV store connected");
-    
     // Create SSE stream
     const stream = new ReadableStream({
       start: async (controller) => {
         console.log("SSE: Stream started");
         
         // Send initial token count
-        const initialTokens = await kv.get<number>(["user_tokens", userId]);
-        const tokens = initialTokens.value || 0;
+        const tokens = await getUserTokens(userId);
         console.log(`SSE: Initial tokens for user ${userId}: ${tokens}`);
         controller.enqueue(`data: ${tokens}\n\n`);
 
         // Set up token decrementer
         console.log("SSE: Setting up token decrementer");
         const interval = setInterval(async () => {
-          const success = await decrementUserTokens(kv, userId);
+          const success = await decrementUserTokens(userId);
           if (!success) {
             console.log("SSE: No more tokens, stopping decrementer");
             clearInterval(interval);
@@ -71,5 +67,5 @@ export const handler: Handlers = {
         "Connection": "keep-alive",
       },
     });
-  },
+  }
 }; 

@@ -6,8 +6,6 @@ import { getUserTokens } from "../../utils/stripe.ts";
 import Header from "../../islands/Header.tsx";
 import Dashboard from "../../islands/Dashboard.tsx";
 
-const kv = await Deno.openKv();
-
 interface DashboardData {
   user: {
     id: string;
@@ -15,6 +13,7 @@ interface DashboardData {
     email?: string;
   };
   tokens: number;
+  isDevelopment: boolean;
 }
 
 export const handler: Handlers<DashboardData> = {
@@ -34,9 +33,10 @@ export const handler: Handlers<DashboardData> = {
       return new Response("User not found", { status: 404 });
     }
 
-    const tokens = await getUserTokens(kv, user.id);
+    const tokens = await getUserTokens(user.id);
+    const isDevelopment = Deno.env.get("DENO_ENV") !== "production";
 
-    return ctx.render({ user, tokens });
+    return ctx.render({ user, tokens, isDevelopment });
   },
 };
 
@@ -47,7 +47,7 @@ export default function DashboardPage({ data }: { data: DashboardData }) {
         <title>Dashboard - Cyber</title>
       </Head>
       <div class="min-h-screen bg-base-200">
-        <Header user={data.user} tokens={data.tokens} />
+        <Header user={data.user} tokens={data.tokens} isDevelopment={data.isDevelopment} />
         <Dashboard user={data.user} />
       </div>
     </>

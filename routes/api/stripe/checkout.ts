@@ -23,13 +23,14 @@ export const handler: Handlers = {
       }
 
       const user = await kindeClient.getUser(sessionManager);
-      if (!user?.id) {
-        return new Response("User not found", { status: 404 });
+      if (!user?.id || !user?.email) {
+        return new Response("User not found or missing email", { status: 404 });
       }
 
       const url = await createPurchase(
         kv,
         user.id,
+        user.email,
         hours,
         `${new URL(req.url).origin}/dashboard?payment=success`,
         `${new URL(req.url).origin}/dashboard?payment=cancelled`,

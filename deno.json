@@ -32,7 +32,8 @@
     "tailwindcss/plugin": "npm:/tailwindcss@3.4.1/plugin.js",
     "$std/": "https://deno.land/std@0.216.0/",
     "std/": "https://deno.land/std@0.216.0/",
-    "@kinde-oss/kinde-typescript-sdk": "npm:@kinde-oss/kinde-typescript-sdk@2.9.1"
+    "@kinde-oss/kinde-typescript-sdk": "npm:@kinde-oss/kinde-typescript-sdk@2.9.1",
+    "@juliangarnierorg/anime-beta": "npm:@juliangarnierorg/anime-beta"
   },
   "compilerOptions": {
     "jsx": "react-jsx",

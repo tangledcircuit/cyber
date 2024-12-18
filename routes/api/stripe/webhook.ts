@@ -1,6 +1,5 @@
-import { Handlers } from "$fresh/server.ts";
-import { completePurchase } from "../../../utils/stripe.ts";
 import Stripe from "npm:stripe";
+import { createBroadcastChannel } from "../../../utils/db.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
   apiVersion: "2023-10-16",
@@ -8,51 +7,95 @@ const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
 
 const kv = await Deno.openKv();
 
-export const handler: Handlers = {
-  async POST(req) {
-    const signature = req.headers.get("stripe-signature");
-    if (!signature) {
-      console.error("Webhook: Missing signature");
-      return new Response("No signature", { status: 400 });
-    }
+export async function handler(req: Request) {
+  if (req.method !== "POST") {
+    return new Response("Method not allowed", { status: 405 });
+  }
 
-    try {
-      console.log("Webhook: Processing request");
-      const payload = await req.text();
-      console.log("Webhook: Received payload:", payload.slice(0, 100) + "...");
+  const signature = req.headers.get("stripe-signature");
+  if (!signature) {
+    return new Response("No signature", { status: 400 });
+  }
+
+  try {
+    const payload = await req.text();
+    const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET")!;
+    const event = await stripe.webhooks.constructEventAsync(
+      payload,
+      signature,
+      webhookSecret
+    );
+
+    if (event.type === "checkout.session.completed") {
+      console.log("Processing completed checkout session");
+      const session = event.data.object;
+      const { userId, purchaseId } = session.metadata || {};
+      const customerEmail = session.customer_details?.email;
       
-      const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET")!;
-      const event = await stripe.webhooks.constructEventAsync(
-        payload,
-        signature,
-        webhookSecret
-      );
-      console.log("Webhook: Event verified:", event.type);
-
-      // Handle successful payments
-      if (event.type === "checkout.session.completed") {
-        const session = event.data.object;
-        console.log("Webhook: Processing completed checkout:", session.id);
-        
-        const purchaseId = session.metadata?.purchaseId;
-        if (!purchaseId) {
-          console.error("Webhook: Missing purchaseId in metadata");
-          return new Response("Missing purchaseId", { status: 400 });
-        }
-
-        console.log(`Webhook: Completing purchase ${purchaseId}`);
-        await completePurchase(kv, purchaseId);
-        console.log(`Webhook: Purchase completed`);
+      if (!userId || !customerEmail) {
+        console.error("Missing userId or customer email", { userId, customerEmail });
+        return new Response("Missing userId or customer email", { status: 400 });
       }
 
-      return new Response("OK", { status: 200 });
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "An unknown error occurred";
-      console.error("Webhook error:", message);
-      if (err instanceof Error && err.stack) {
-        console.error("Stack trace:", err.stack);
+      // Get the line items to calculate tokens
+      console.log("Fetching line items for session", session.id);
+      const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
+      const tokens = (lineItems.data[0]?.quantity || 0) * 3600; // 1 hour = 3600 tokens
+
+      // Get current token balance
+      console.log("Getting current token balance for user", userId);
+      const currentTokens = await kv.get<number>(["user_tokens", userId]);
+      const newAmount = (currentTokens.value || 0) + tokens;
+      console.log("New token balance:", newAmount);
+
+      // Store transaction in KV
+      const timestamp = Date.now();
+      const transactionId = purchaseId || crypto.randomUUID();
+
+      // Create the transaction record
+      const transaction = {
+        id: transactionId,
+        userId,
+        email: customerEmail,
+        type: "purchase",
+        amount: tokens,
+        timestamp,
+        description: `Purchased ${lineItems.data[0]?.quantity || 0} hours (${tokens} tokens)`,
+        balance: newAmount,
+        stripePaymentId: session.payment_intent as string,
+        stripeStatus: "completed"
+      };
+
+      console.log("Storing transaction in KV:", transaction);
+
+      // Update KV store atomically
+      await kv.atomic()
+        .set(["user_tokens", userId], newAmount)
+        .set(["transactions", transactionId], transaction)
+        .commit();
+
+      // Broadcast update immediately
+      console.log("Broadcasting token update");
+      const bc = createBroadcastChannel("token-updates");
+      try {
+        const message = {
+          type: "token-update",
+          userId,
+          tokens: newAmount,
+          transaction
+        };
+        console.log("Broadcasting message:", message);
+        bc.postMessage(message);
+      } finally {
+        bc.close();
       }
-      return new Response(message, { status: 400 });
+
+      console.log("Webhook processing completed successfully");
     }
-  },
-}; 
+
+    return new Response("OK");
+  } catch (error) {
+    console.error("Webhook error:", error);
+    return new Response(error instanceof Error ? error.message : "Unknown error", { status: 400 });
+  }
+} 
