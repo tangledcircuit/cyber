@@ -17,6 +17,8 @@ export default function PurchaseModal() {
   const handlePurchase = async () => {
     try {
       setIsLoading(true);
+      setIsOpen(false);
+      
       const response = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -33,6 +35,7 @@ export default function PurchaseModal() {
     } catch (err) {
       console.error("Purchase error:", err);
       alert(err instanceof Error ? err.message : "Failed to initiate purchase");
+      setIsOpen(true);
     } finally {
       setIsLoading(false);
     }

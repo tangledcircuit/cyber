@@ -30,6 +30,7 @@ import * as $Header from "./islands/Header.tsx";
 import * as $PurchaseButton from "./islands/PurchaseButton.tsx";
 import * as $PurchaseModal from "./islands/PurchaseModal.tsx";
 import * as $TokenBalance from "./islands/TokenBalance.tsx";
+import * as $TokenDisplay from "./islands/TokenDisplay.tsx";
 import type { Manifest } from "$fresh/server.ts";
 
 const manifest = {
@@ -64,6 +65,7 @@ const manifest = {
     "./islands/PurchaseButton.tsx": $PurchaseButton,
     "./islands/PurchaseModal.tsx": $PurchaseModal,
     "./islands/TokenBalance.tsx": $TokenBalance,
+    "./islands/TokenDisplay.tsx": $TokenDisplay,
   },
   baseUrl: import.meta.url,
 } satisfies Manifest;
