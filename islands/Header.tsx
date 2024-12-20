@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "preact/hooks";
 import PurchaseModal from "./PurchaseModal.tsx";
 import { animate } from "@juliangarnierorg/anime-beta";
+import { Transaction } from "../types/transaction.ts";
 
 interface HeaderProps {
   user: {
@@ -8,7 +9,6 @@ interface HeaderProps {
     given_name?: string;
     email?: string;
   };
-  tokens: number;
   isDevelopment: boolean;
 }
 
@@ -75,22 +75,73 @@ function OnlineStatus() {
   );
 }
 
-export default function Header({ user, tokens: initialTokens, isDevelopment }: HeaderProps) {
-  const [currentTokens, setCurrentTokens] = useState(initialTokens);
+export default function Header({ user, isDevelopment }: HeaderProps) {
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isResetting, setIsResetting] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const tokenRef = useRef<HTMLDivElement>(null);
   const pollCount = useRef(0);
 
-  // Poll for updates when returning from payment
+  // Load transactions and listen for updates
   useEffect(() => {
-    const isReturningFromPayment = new URL(globalThis.location.href).searchParams.get("payment") === "success";
-    
-    if (isReturningFromPayment) {
-      setIsSyncing(true);
-      setCurrentTokens("...");
+    // Initial load of transactions
+    fetch(`/api/transactions?userId=${user.id}`)
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        return res.json();
+      })
+      .then(data => {
+        if (Array.isArray(data.transactions)) {
+          setTransactions(data.transactions);
+        } else {
+          console.error("Invalid transactions data:", data);
+        }
+      })
+      .catch(err => {
+        console.error("Failed to load transactions:", err);
+      });
 
-      // Remove the URL parameters
+    // Listen for transaction updates
+    const bc = new BroadcastChannel("token-updates");
+    bc.onmessage = (event) => {
+      if (event.data.type === "token-update" && event.data.userId === user.id && event.data.transaction) {
+        setTransactions(prev => {
+          // Remove any existing transaction with the same ID
+          const filtered = prev.filter(t => t.id !== event.data.transaction.id);
+          // Add the new transaction and sort by timestamp
+          return [event.data.transaction, ...filtered].sort((a, b) => b.timestamp - a.timestamp);
+        });
+      }
+    };
+
+    return () => bc.close();
+  }, [user.id]);
+
+  // Calculate current balance from transactions
+  const currentTokens = transactions.reduce((sum, tx) => sum + tx.amount, 0);
+
+  // Show loading animation while syncing
+  useEffect(() => {
+    if (isSyncing && tokenRef.current) {
+      animate(tokenRef.current, {
+        scale: [1, 1.1],
+        translateY: [0, -5],
+        opacity: [1, 0.7],
+        duration: 700,
+        direction: 'alternate',
+        loop: true,
+        easing: 'easeInOutSine'
+      });
+    }
+  }, [isSyncing]);
+
+  // Check if returning from payment
+  useEffect(() => {
+    const params = new URLSearchParams(globalThis.location.search);
+    if (params.get("payment") === "success") {
+      setIsSyncing(true);
+      
+      // Remove URL parameters
       const url = new URL(globalThis.location.href);
       url.searchParams.delete("payment");
       url.searchParams.delete("purchase");
@@ -103,24 +154,20 @@ export default function Header({ user, tokens: initialTokens, isDevelopment }: H
           const data = await res.json();
           
           if (Array.isArray(data.transactions) && data.transactions.length > 0) {
-            const latestTransaction = data.transactions[0];
-            if (latestTransaction.balance !== currentTokens) {
-              // Found an update!
-              clearInterval(pollInterval);
-              setIsSyncing(false);
-              setCurrentTokens(latestTransaction.balance);
-              
-              // Play success animation
-              if (tokenRef.current) {
-                animate(tokenRef.current, {
-                  scale: [1, 1.5, 1],
-                  translateY: [0, -20, 0],
-                  backgroundColor: ['#ffffff', '#4CAF50', '#ffffff'],
-                  opacity: 1,
-                  duration: 1500,
-                  easing: 'spring(1, 80, 10, 0)'
-                });
-              }
+            setTransactions(data.transactions);
+            clearInterval(pollInterval);
+            setIsSyncing(false);
+            
+            // Play success animation
+            if (tokenRef.current) {
+              animate(tokenRef.current, {
+                scale: [1, 1.5, 1],
+                translateY: [0, -20, 0],
+                backgroundColor: ['#ffffff', '#4CAF50', '#ffffff'],
+                opacity: 1,
+                duration: 1500,
+                easing: 'spring(1, 80, 10, 0)'
+              });
             }
           }
           
@@ -139,44 +186,6 @@ export default function Header({ user, tokens: initialTokens, isDevelopment }: H
       return () => clearInterval(pollInterval);
     }
   }, []);
-
-  // Still listen for broadcast updates for real-time changes
-  useEffect(() => {
-    const bc = new BroadcastChannel("token-updates");
-    bc.onmessage = (event) => {
-      if (event.data.type === "token-update" && event.data.userId === user.id) {
-        setIsSyncing(false);
-        setCurrentTokens(event.data.tokens);
-        
-        if (tokenRef.current) {
-          animate(tokenRef.current, {
-            scale: [1, 1.5, 1],
-            translateY: [0, -20, 0],
-            backgroundColor: ['#ffffff', '#4CAF50', '#ffffff'],
-            opacity: 1,
-            duration: 1500,
-            easing: 'spring(1, 80, 10, 0)'
-          });
-        }
-      }
-    };
-    return () => bc.close();
-  }, [user.id]);
-
-  // Show loading animation while syncing
-  useEffect(() => {
-    if (isSyncing && tokenRef.current) {
-      animate(tokenRef.current, {
-        scale: [1, 1.1],
-        translateY: [0, -5],
-        opacity: [1, 0.7],
-        duration: 700,
-        direction: 'alternate',
-        loop: true,
-        easing: 'easeInOutSine'
-      });
-    }
-  }, [isSyncing]);
 
   const handleResetDB = async () => {
     if (!confirm("Are you sure you want to reset the database? This will clear all transactions.")) {
@@ -219,7 +228,7 @@ export default function Header({ user, tokens: initialTokens, isDevelopment }: H
               Syncing...
             </span>
           ) : (
-            typeof currentTokens === "number" ? `${currentTokens} tokens` : currentTokens
+            `${currentTokens} tokens`
           )}
         </div>
       </div>
@@ -232,7 +241,6 @@ export default function Header({ user, tokens: initialTokens, isDevelopment }: H
             {user.given_name || "User"}
           </div>
           <ul tabIndex={0} class="mt-3 z-[1] p-2 shadow menu menu-sm dropdown-content bg-base-100 rounded-box w-52">
-            {/* Only show reset button in development */}
             {isDevelopment && (
               <li>
                 <button 

@@ -14,6 +14,7 @@ import * as $api_logout from "./routes/api/logout.ts";
 import * as $api_reset_db from "./routes/api/reset-db.ts";
 import * as $api_stripe_checkout from "./routes/api/stripe/checkout.ts";
 import * as $api_stripe_webhook from "./routes/api/stripe/webhook.ts";
+import * as $api_tokens_userId_ from "./routes/api/tokens/[userId].ts";
 import * as $api_tokens_watch from "./routes/api/tokens/watch.ts";
 import * as $api_transactions from "./routes/api/transactions.ts";
 import * as $dashboard from "./routes/dashboard.tsx";
@@ -28,6 +29,7 @@ import * as $Dashboard from "./islands/Dashboard.tsx";
 import * as $Header from "./islands/Header.tsx";
 import * as $PurchaseButton from "./islands/PurchaseButton.tsx";
 import * as $PurchaseModal from "./islands/PurchaseModal.tsx";
+import * as $TokenBalance from "./islands/TokenBalance.tsx";
 import type { Manifest } from "$fresh/server.ts";
 
 const manifest = {
@@ -44,6 +46,7 @@ const manifest = {
     "./routes/api/reset-db.ts": $api_reset_db,
     "./routes/api/stripe/checkout.ts": $api_stripe_checkout,
     "./routes/api/stripe/webhook.ts": $api_stripe_webhook,
+    "./routes/api/tokens/[userId].ts": $api_tokens_userId_,
     "./routes/api/tokens/watch.ts": $api_tokens_watch,
     "./routes/api/transactions.ts": $api_transactions,
     "./routes/dashboard.tsx": $dashboard,
@@ -60,6 +63,7 @@ const manifest = {
     "./islands/Header.tsx": $Header,
     "./islands/PurchaseButton.tsx": $PurchaseButton,
     "./islands/PurchaseModal.tsx": $PurchaseModal,
+    "./islands/TokenBalance.tsx": $TokenBalance,
   },
   baseUrl: import.meta.url,
 } satisfies Manifest;

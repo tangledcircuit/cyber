@@ -1,23 +1,13 @@
 import { useEffect, useState } from "preact/hooks";
 import AnimatedDashboard from "./AnimatedHero.tsx";
+import { Transaction } from "../types/transaction.ts";
 
 interface DashboardProps {
   user: {
     id: string;
-    given_name?: string;
     email?: string;
+    given_name?: string;
   };
-}
-
-interface Transaction {
-  id: string;
-  userId: string;
-  type: "purchase" | "usage";
-  amount: number;
-  timestamp: number;
-  description: string;
-  stripePaymentId?: string;
-  stripeStatus?: "pending" | "completed" | "failed";
 }
 
 const Dashboard = ({ user }: DashboardProps) => {
