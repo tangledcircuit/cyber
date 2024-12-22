@@ -15,6 +15,38 @@
 4. Return JSON response
 5. Client renders UI
 
+### Client-Side Script Pattern
+1. NEVER use dangerouslySetInnerHTML for any scripts
+2. Use Fresh's built-in script handling in Head:
+   ```tsx
+   const MY_SCRIPT = `
+   // Your client-side script logic here
+   `;
+   
+   // In _app.tsx or layout
+   <Head>
+     <script id="my-script">{MY_SCRIPT}</script>
+   </Head>
+   ```
+3. Keep scripts in constants outside the component
+4. Always add an id to scripts for debugging
+5. Check for API availability (e.g., localStorage, indexedDB)
+6. Handle errors gracefully
+
+### Theme Persistence Pattern
+1. Apply theme script before content renders to prevent flash
+2. Keep theme logic in island components for client-side updates
+3. Use data-theme attribute for DaisyUI theme switching
+4. Example implementation:
+   ```tsx
+   const THEME_SCRIPT = `
+   if (typeof localStorage !== 'undefined') {
+     const theme = localStorage.getItem('theme') || 'light';
+     document.documentElement.setAttribute('data-theme', theme);
+   }
+   `;
+   ```
+
 ### Payment Flow
 1. User initiates purchase -> Stripe Checkout
 2. Stripe Webhook confirms payment

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "preact/hooks";
 import PurchaseModal from "./PurchaseModal.tsx";
 import TokenDisplay from "./TokenDisplay.tsx";
+import ThemeSwitcher from "./ThemeSwitcher.tsx";
 
 interface HeaderProps {
   user: {
@@ -114,6 +115,7 @@ export default function Header({ user, isDevelopment }: HeaderProps) {
       </div>
       <div class="flex-none gap-4">
         <OnlineStatus />
+        <ThemeSwitcher />
         <PurchaseModal />
         <div class="dropdown dropdown-end">
           <div tabIndex={0} role="button" class="btn btn-ghost gap-2">

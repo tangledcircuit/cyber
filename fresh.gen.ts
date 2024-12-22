@@ -29,6 +29,7 @@ import * as $Dashboard from "./islands/Dashboard.tsx";
 import * as $Header from "./islands/Header.tsx";
 import * as $PurchaseButton from "./islands/PurchaseButton.tsx";
 import * as $PurchaseModal from "./islands/PurchaseModal.tsx";
+import * as $ThemeSwitcher from "./islands/ThemeSwitcher.tsx";
 import * as $TokenBalance from "./islands/TokenBalance.tsx";
 import * as $TokenDisplay from "./islands/TokenDisplay.tsx";
 import type { Manifest } from "$fresh/server.ts";
@@ -64,6 +65,7 @@ const manifest = {
     "./islands/Header.tsx": $Header,
     "./islands/PurchaseButton.tsx": $PurchaseButton,
     "./islands/PurchaseModal.tsx": $PurchaseModal,
+    "./islands/ThemeSwitcher.tsx": $ThemeSwitcher,
     "./islands/TokenBalance.tsx": $TokenBalance,
     "./islands/TokenDisplay.tsx": $TokenDisplay,
   },
