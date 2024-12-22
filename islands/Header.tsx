@@ -1,6 +1,6 @@
 import { useEffect, useState } from "preact/hooks";
 import PurchaseModal from "./PurchaseModal.tsx";
-import TokenDisplay from "./TokenDisplay.tsx";
+import BalanceDisplay from "./BalanceDisplay.tsx";
 import ThemeSwitcher from "./ThemeSwitcher.tsx";
 
 interface HeaderProps {
@@ -111,7 +111,7 @@ export default function Header({ user, isDevelopment }: HeaderProps) {
     <div class="navbar bg-base-100">
       <div class="flex-1">
         <a class="btn btn-ghost text-xl">Cyber</a>
-        <TokenDisplay userId={user.id} />
+        <BalanceDisplay userId={user.id} />
       </div>
       <div class="flex-none gap-4">
         <OnlineStatus />

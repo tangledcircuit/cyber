@@ -7,6 +7,7 @@ import * as $_app from "./routes/_app.tsx";
 import * as $_layout from "./routes/_layout.tsx";
 import * as $api_auth_callback from "./routes/api/auth/callback.ts";
 import * as $api_auth_login from "./routes/api/auth/login.ts";
+import * as $api_balance_userId_ from "./routes/api/balance/[userId].ts";
 import * as $api_events from "./routes/api/events.ts";
 import * as $api_health from "./routes/api/health.ts";
 import * as $api_joke from "./routes/api/joke.ts";
@@ -24,6 +25,7 @@ import * as $index from "./routes/index.tsx";
 import * as $login from "./routes/login.tsx";
 import * as $register from "./routes/register.tsx";
 import * as $AnimatedHero from "./islands/AnimatedHero.tsx";
+import * as $BalanceDisplay from "./islands/BalanceDisplay.tsx";
 import * as $Counter from "./islands/Counter.tsx";
 import * as $Dashboard from "./islands/Dashboard.tsx";
 import * as $Header from "./islands/Header.tsx";
@@ -41,6 +43,7 @@ const manifest = {
     "./routes/_layout.tsx": $_layout,
     "./routes/api/auth/callback.ts": $api_auth_callback,
     "./routes/api/auth/login.ts": $api_auth_login,
+    "./routes/api/balance/[userId].ts": $api_balance_userId_,
     "./routes/api/events.ts": $api_events,
     "./routes/api/health.ts": $api_health,
     "./routes/api/joke.ts": $api_joke,
@@ -60,6 +63,7 @@ const manifest = {
   },
   islands: {
     "./islands/AnimatedHero.tsx": $AnimatedHero,
+    "./islands/BalanceDisplay.tsx": $BalanceDisplay,
     "./islands/Counter.tsx": $Counter,
     "./islands/Dashboard.tsx": $Dashboard,
     "./islands/Header.tsx": $Header,

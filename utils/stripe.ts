@@ -1,5 +1,7 @@
 import Stripe from "npm:stripe";
 import { createBroadcastChannel } from "./db.ts";
+import { updateBalance, calculateBalance } from "./balance.ts";
+import { Transaction } from "../types/transaction.ts";
 
 // Single token product configuration (shared between client and server)
 export const TOKEN_PRODUCT = {
@@ -45,17 +47,26 @@ export async function syncStripeTransactions(kv: Deno.Kv, userId: string, email:
   });
 
   // Filter payments by status and customer email
-  const userPayments = payments.data.filter(payment => 
+  const userPayments = payments.data.filter((payment: Stripe.PaymentIntent) => 
     payment.status === "succeeded" && 
     payment.customer?.email === email
   );
 
   // Get existing transactions from KV
   const existingTransactions = new Set<string>();
-  const iter = kv.list<PurchaseRecord>({ prefix: ["transactions"] });
+  const iter = kv.list<Transaction>({ prefix: ["transactions"] });
   for await (const entry of iter) {
     if (entry.value.stripePaymentId) {
       existingTransactions.add(entry.value.stripePaymentId);
+    }
+  }
+
+  // Get all current transactions for balance calculation
+  const allTransactions: Transaction[] = [];
+  const txIter = kv.list<Transaction>({ prefix: ["transactions"] });
+  for await (const entry of txIter) {
+    if (entry.value.userId === userId) {
+      allTransactions.push(entry.value);
     }
   }
 
@@ -67,49 +78,35 @@ export async function syncStripeTransactions(kv: Deno.Kv, userId: string, email:
       const timestamp = payment.created * 1000; // Convert to milliseconds
       const purchaseId = crypto.randomUUID();
 
-      // Get current token balance
-      const currentTokens = await kv.get<number>(["user_tokens", userId]);
-      const newAmount = (currentTokens.value || 0) + tokens;
-
-      // Update KV store
-      await kv.atomic()
-        .set(["user_tokens", userId], newAmount)
-        .set(["transactions", purchaseId], {
+      // Create the transaction
+      const transaction: Transaction = {
+        id: purchaseId,
+        userId,
+        type: "purchase",
+        amount: tokens,
+        timestamp,
+        description: `Purchased ${Math.floor(tokens / 3600)} hours (${tokens} tokens)`,
+        balance: calculateBalance([...allTransactions, { 
           id: purchaseId,
           userId,
-          email,
           type: "purchase",
           amount: tokens,
           timestamp,
           description: `Purchased ${Math.floor(tokens / 3600)} hours (${tokens} tokens)`,
-          balance: newAmount,
           stripePaymentId: payment.id,
           stripeStatus: "completed"
-        })
+        }]),
+        stripePaymentId: payment.id,
+        stripeStatus: "completed"
+      };
+
+      // Store transaction and update balance
+      await kv.atomic()
+        .set(["transactions", purchaseId], transaction)
         .commit();
 
-      // Broadcast update
-      const bc = createBroadcastChannel("token-updates");
-      try {
-        bc.postMessage({
-          type: "token-update",
-          userId,
-          tokens: newAmount,
-          transaction: {
-            id: purchaseId,
-            userId,
-            type: "purchase",
-            amount: tokens,
-            timestamp,
-            description: `Purchased ${Math.floor(tokens / 3600)} hours (${tokens} tokens)`,
-            balance: newAmount,
-            stripePaymentId: payment.id,
-            stripeStatus: "completed"
-          }
-        });
-      } finally {
-        bc.close();
-      }
+      allTransactions.push(transaction);
+      await updateBalance(kv, userId, allTransactions);
     }
   }
 
@@ -131,44 +128,25 @@ export async function syncStripeTransactions(kv: Deno.Kv, userId: string, email:
         const timestamp = paymentIntent.created * 1000; // Convert to milliseconds
         const purchaseId = crypto.randomUUID();
 
-        // Get current token balance
-        const currentTokens = await kv.get<number>(["user_tokens", userId]);
-        const newAmount = (currentTokens.value || 0) + tokens;
+        // Create the transaction
+        const transaction: Transaction = {
+          id: purchaseId,
+          userId,
+          type: "purchase",
+          amount: tokens,
+          timestamp,
+          description: `Purchased ${Math.floor(tokens / 3600)} hours (${tokens} tokens)`,
+          stripePaymentId: paymentIntent.id,
+          stripeStatus: "completed"
+        };
 
-        // Update KV store
+        // Store transaction and update balance
         await kv.atomic()
-          .set(["user_tokens", userId], newAmount)
-          .set(["transactions", purchaseId], {
-            id: purchaseId,
-            userId,
-            email,
-            type: "purchase",
-            amount: tokens,
-            timestamp,
-            description: `Purchased ${Math.floor(tokens / 3600)} hours (${tokens} tokens)`,
-            balance: newAmount,
-            stripePaymentId: paymentIntent.id,
-            stripeStatus: "completed"
-          })
+          .set(["transactions", purchaseId], transaction)
           .commit();
 
-        // Broadcast update
-        const bc = createBroadcastChannel("token-updates");
-        try {
-          bc.postMessage({
-            type: "token-update",
-            userId,
-            tokens: newAmount,
-            transaction: {
-              id: purchaseId,
-              amount: tokens,
-              timestamp,
-              balance: newAmount
-            }
-          });
-        } finally {
-          bc.close();
-        }
+        allTransactions.push(transaction);
+        await updateBalance(kv, userId, allTransactions);
       }
     }
   }
@@ -348,10 +326,22 @@ export async function decrementUserTokens(
     })
     .commit();
 
-  // Broadcast update
-  const bc = createBroadcastChannel("token-updates");
+  // Broadcast immediate credit update
+  const creditChannel = createBroadcastChannel("credit-updates");
   try {
-    bc.postMessage({
+    creditChannel.postMessage({
+      type: "credit-update",
+      userId,
+      amount
+    });
+  } finally {
+    creditChannel.close();
+  }
+
+  // Broadcast transaction update
+  const txChannel = createBroadcastChannel("token-updates");
+  try {
+    txChannel.postMessage({
       type: "token-update",
       userId,
       tokens: newAmount,
@@ -366,7 +356,7 @@ export async function decrementUserTokens(
       }
     });
   } finally {
-    bc.close();
+    txChannel.close();
   }
 
   return true;

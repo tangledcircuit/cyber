@@ -15,6 +15,46 @@
 4. Return JSON response
 5. Client renders UI
 
+### Balance Management Pattern
+1. NEVER calculate balance in UI components
+2. Use transaction list as source of truth:
+   ```tsx
+   // When transactions change
+   const calculateBalance = (transactions: Transaction[]) => {
+     return transactions.reduce((sum, tx) => sum + tx.amount, 0);
+   };
+   ```
+3. Store balance in KV after each transaction update:
+   ```tsx
+   // After transaction list changes
+   const newBalance = calculateBalance(transactions);
+   await kv.atomic()
+     .set(["balances", userId], newBalance)
+     .broadcast("balance-updates", { userId, balance: newBalance })
+     .commit();
+   ```
+4. Components subscribe to balance updates:
+   ```tsx
+   // In balance display component
+   useEffect(() => {
+     const bc = new BroadcastChannel("balance-updates");
+     bc.onmessage = (event) => {
+       if (event.data.userId === userId) {
+         setBalance(event.data.balance);
+       }
+     };
+     return () => bc.close();
+   }, [userId]);
+   ```
+5. Balance-modifying functions MUST:
+   - Update transactions first
+   - Let transaction updates trigger balance recalculation
+   - NEVER modify balance directly
+6. Balance reads MUST:
+   - Subscribe to balance updates
+   - Fall back to transaction list calculation if needed
+   - Cache balance locally for performance
+
 ### Client-Side Script Pattern
 1. NEVER use dangerouslySetInnerHTML for any scripts
 2. Use Fresh's built-in script handling in Head:

@@ -1,11 +1,11 @@
 import Stripe from "npm:stripe";
 import { createBroadcastChannel } from "../../../utils/db.ts";
+import { updateBalance, calculateBalance } from "../../../utils/balance.ts";
+import { Transaction } from "../../../types/transaction.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
   apiVersion: "2023-10-16",
 });
-
-const kv = await Deno.openKv();
 
 export async function handler(req: Request) {
   if (req.method !== "POST") {
@@ -42,60 +42,50 @@ export async function handler(req: Request) {
       const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
       const tokens = (lineItems.data[0]?.quantity || 0) * 3600; // 1 hour = 3600 tokens
 
-      // Get current token balance
-      console.log("Getting current token balance for user", userId);
-      const currentTokens = await kv.get<number>(["user_tokens", userId]);
-      const newAmount = (currentTokens.value || 0) + tokens;
-      console.log("New token balance:", newAmount);
+      // Get all current transactions
+      const kv = await Deno.openKv();
+      const allTransactions: Transaction[] = [];
+      const txIter = kv.list<Transaction>({ prefix: ["transactions"] });
+      for await (const entry of txIter) {
+        if (entry.value.userId === userId) {
+          allTransactions.push(entry.value);
+        }
+      }
 
-      // Store transaction in KV
+      // Create new transaction
       const timestamp = Date.now();
       const transactionId = purchaseId || crypto.randomUUID();
-
-      // Create the transaction record
-      const transaction = {
+      const newTransaction: Omit<Transaction, "balance"> = {
         id: transactionId,
         userId,
-        email: customerEmail,
         type: "purchase",
         amount: tokens,
         timestamp,
         description: `Purchased ${lineItems.data[0]?.quantity || 0} hours (${tokens} tokens)`,
-        balance: newAmount,
         stripePaymentId: session.payment_intent as string,
         stripeStatus: "completed"
       };
 
-      console.log("Storing transaction in KV:", transaction);
+      const transaction: Transaction = {
+        ...newTransaction,
+        balance: calculateBalance([...allTransactions, newTransaction as Transaction])
+      };
 
-      // Update KV store atomically
+      // Store transaction
       await kv.atomic()
-        .set(["user_tokens", userId], newAmount)
-        .set(["transactions", transactionId], transaction)
+        .set(["transactions", transaction.id], transaction)
         .commit();
 
-      // Broadcast update immediately
-      console.log("Broadcasting token update");
-      const bc = createBroadcastChannel("token-updates");
-      try {
-        const message = {
-          type: "token-update",
-          userId,
-          tokens: newAmount,
-          transaction
-        };
-        console.log("Broadcasting message:", message);
-        bc.postMessage(message);
-      } finally {
-        bc.close();
-      }
+      // Update balance
+      allTransactions.push(transaction);
+      await updateBalance(kv, userId, allTransactions);
 
-      console.log("Webhook processing completed successfully");
+      return new Response("OK");
     }
 
     return new Response("OK");
-  } catch (error) {
-    console.error("Webhook error:", error);
-    return new Response(error instanceof Error ? error.message : "Unknown error", { status: 400 });
+  } catch (err) {
+    console.error("Webhook error:", err);
+    return new Response("Webhook Error: " + (err as Error).message, { status: 400 });
   }
 } 
