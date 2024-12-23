@@ -71,16 +71,16 @@ export default function BalanceDisplay({ userId }: BalanceDisplayProps) {
 
   if (isLoading || effectiveBalance === null) {
     return (
-      <div class="badge badge-primary badge-lg gap-2">
-        <span class="material-icons text-sm">toll</span>
-        <span class="loading loading-dots loading-sm"></span>
+      <div class="badge badge-primary badge-lg gap-1 sm:gap-2 text-xs sm:text-sm">
+        <span class="material-icons text-sm sm:text-base">toll</span>
+        <span class="loading loading-dots loading-xs sm:loading-sm"></span>
       </div>
     );
   }
 
   return (
-    <div class="badge badge-primary badge-lg gap-2">
-      <span class="material-icons text-sm">toll</span>
+    <div class="badge badge-primary badge-lg gap-1 sm:gap-2 text-xs sm:text-sm">
+      <span class="material-icons text-sm sm:text-base">toll</span>
       <span class="balance-amount">{effectiveBalance}</span> tokens
     </div>
   );

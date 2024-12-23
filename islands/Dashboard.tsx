@@ -54,25 +54,25 @@ const Dashboard = ({ user }: DashboardProps) => {
   }, [user.id]);
 
   return (
-    <div class="container mx-auto p-4">
+    <div class="w-full px-2 sm:container sm:mx-auto sm:p-4">
       {/* Tabs */}
-      <div class="tabs tabs-boxed">
+      <div class="tabs tabs-boxed w-full">
         <button 
-          class={`tab ${activeTab === "overview" ? "tab-active" : ""}`}
+          class={`tab flex-1 sm:flex-none ${activeTab === "overview" ? "tab-active" : ""}`}
           onClick={() => setActiveTab("overview")}
         >
           <span class="material-icons mr-2">dashboard</span>
           Overview
         </button>
         <button 
-          class={`tab ${activeTab === "history" ? "tab-active" : ""}`}
+          class={`tab flex-1 sm:flex-none ${activeTab === "history" ? "tab-active" : ""}`}
           onClick={() => setActiveTab("history")}
         >
           <span class="material-icons mr-2">history</span>
           History
         </button>
         <button 
-          class={`tab ${activeTab === "settings" ? "tab-active" : ""}`}
+          class={`tab flex-1 sm:flex-none ${activeTab === "settings" ? "tab-active" : ""}`}
           onClick={() => setActiveTab("settings")}
         >
           <span class="material-icons mr-2">settings</span>
@@ -91,7 +91,7 @@ const Dashboard = ({ user }: DashboardProps) => {
 
         {activeTab === "history" && (
           <div class="card bg-base-100 shadow-xl">
-            <div class="card-body">
+            <div class="card-body p-2 sm:p-6">
               <h2 class="card-title">Transaction History</h2>
               {loading ? (
                 <div class="flex justify-center p-4">
@@ -102,8 +102,8 @@ const Dashboard = ({ user }: DashboardProps) => {
                   No transactions yet
                 </p>
               ) : (
-                <div class="overflow-x-auto">
-                  <table class="table">
+                <div class="overflow-x-auto -mx-2 sm:mx-0">
+                  <table class="table table-sm sm:table-md">
                     <thead>
                       <tr>
                         <th>Date</th>
@@ -116,21 +116,21 @@ const Dashboard = ({ user }: DashboardProps) => {
                     <tbody>
                       {transactions.map((tx) => (
                         <tr key={tx.id}>
-                          <td>{new Date(tx.timestamp).toLocaleString()}</td>
+                          <td class="whitespace-nowrap">{new Date(tx.timestamp).toLocaleString()}</td>
                           <td>
-                            <span class={`badge ${
+                            <span class={`badge badge-sm sm:badge-md ${
                               tx.type === "purchase" ? "badge-success" : "badge-warning"
                             }`}>
                               {tx.type}
                             </span>
                           </td>
-                          <td>{tx.description}</td>
+                          <td class="max-w-[150px] sm:max-w-none truncate">{tx.description}</td>
                           <td class={tx.amount > 0 ? "text-success" : "text-warning"}>
                             {tx.amount > 0 ? "+" : ""}{tx.amount}
                           </td>
                           <td>
                             {tx.stripePaymentId && (
-                              <span class={`badge ${
+                              <span class={`badge badge-sm sm:badge-md ${
                                 tx.stripeStatus === "completed" ? "badge-success" :
                                 tx.stripeStatus === "failed" ? "badge-error" :
                                 "badge-warning"
@@ -151,7 +151,7 @@ const Dashboard = ({ user }: DashboardProps) => {
 
         {activeTab === "settings" && (
           <div class="card bg-base-100 shadow-xl">
-            <div class="card-body">
+            <div class="card-body p-4 sm:p-6">
               <h2 class="card-title">Account Settings</h2>
               <p>Your account settings will be available here.</p>
             </div>

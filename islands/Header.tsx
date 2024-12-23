@@ -108,40 +108,76 @@ export default function Header({ user, isDevelopment }: HeaderProps) {
   };
 
   return (
-    <div class="navbar bg-base-100">
-      <div class="flex-1">
-        <a class="btn btn-ghost text-xl">Cyber</a>
-        <BalanceDisplay userId={user.id} />
-      </div>
-      <div class="flex-none gap-4">
-        <OnlineStatus />
-        <ThemeSwitcher />
-        <PurchaseModal />
-        <div class="dropdown dropdown-end">
-          <div tabIndex={0} role="button" class="btn btn-ghost gap-2">
-            <span class="material-icons">account_circle</span>
-            {user.given_name || "User"}
-          </div>
-          <ul tabIndex={0} class="mt-3 z-[1] p-2 shadow menu menu-sm dropdown-content bg-base-100 rounded-box w-52">
-            {isDevelopment && (
+    <div class="navbar bg-base-100 flex-col sm:flex-row gap-2 sm:gap-4 p-2 sm:p-4">
+      <div class="flex w-full sm:w-auto justify-between sm:justify-start items-center">
+        <a class="btn btn-ghost text-xl px-2 sm:px-4">Cyber</a>
+        <div class="flex items-center sm:hidden">
+          <ThemeSwitcher />
+          <div class="dropdown dropdown-end">
+            <div tabIndex={0} role="button" class="btn btn-ghost btn-sm">
+              <span class="material-icons">menu</span>
+            </div>
+            <ul tabIndex={0} class="mt-3 z-[1] p-2 shadow menu menu-sm dropdown-content bg-base-100 rounded-box w-52">
+              {isDevelopment && (
+                <li>
+                  <button 
+                    onClick={handleResetDB} 
+                    class="text-warning"
+                    disabled={isResetting}
+                  >
+                    <span class="material-icons">restart_alt</span>
+                    {isResetting ? "Resetting..." : "Reset DB (Testing)"}
+                  </button>
+                </li>
+              )}
               <li>
-                <button 
-                  onClick={handleResetDB} 
-                  class="text-warning"
-                  disabled={isResetting}
-                >
-                  <span class="material-icons">restart_alt</span>
-                  {isResetting ? "Resetting..." : "Reset DB (Testing)"}
-                </button>
+                <a href="/api/logout" class="text-error">
+                  <span class="material-icons">logout</span>
+                  Logout
+                </a>
               </li>
-            )}
-            <li>
-              <a href="/api/logout" class="text-error">
-                <span class="material-icons">logout</span>
-                Logout
-              </a>
-            </li>
-          </ul>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex w-full sm:w-auto justify-between sm:flex-1 items-center gap-2 sm:gap-4">
+        <div class="flex items-center gap-2">
+          <BalanceDisplay userId={user.id} />
+          <OnlineStatus />
+        </div>
+        
+        <div class="flex items-center gap-2">
+          <PurchaseModal />
+          <div class="hidden sm:flex items-center gap-2">
+            <ThemeSwitcher />
+            <div class="dropdown dropdown-end">
+              <div tabIndex={0} role="button" class="btn btn-ghost gap-2">
+                <span class="material-icons">account_circle</span>
+                <span class="hidden sm:inline">{user.given_name || "User"}</span>
+              </div>
+              <ul tabIndex={0} class="mt-3 z-[1] p-2 shadow menu menu-sm dropdown-content bg-base-100 rounded-box w-52">
+                {isDevelopment && (
+                  <li>
+                    <button 
+                      onClick={handleResetDB} 
+                      class="text-warning"
+                      disabled={isResetting}
+                    >
+                      <span class="material-icons">restart_alt</span>
+                      {isResetting ? "Resetting..." : "Reset DB (Testing)"}
+                    </button>
+                  </li>
+                )}
+                <li>
+                  <a href="/api/logout" class="text-error">
+                    <span class="material-icons">logout</span>
+                    Logout
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
     </div>

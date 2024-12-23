@@ -239,61 +239,61 @@ export default function Timer({ userId }: TimerProps) {
 
   return (
     <div class="card bg-base-100 shadow-xl">
-      <div class="card-body p-8">
+      <div class="card-body p-4 sm:p-6 md:p-8">
         {/* Main timer display */}
-        <div class="time-display flex justify-center items-baseline gap-4 py-12 px-8 rounded-xl bg-base-200/50 transition-colors">
+        <div class="time-display flex justify-center items-baseline gap-2 sm:gap-4 py-6 sm:py-8 md:py-12 px-4 sm:px-6 md:px-8 rounded-xl bg-base-200/50 transition-colors">
           <div class="flex flex-col items-center">
-            <div class="text-8xl font-mono font-bold text-primary" style="text-shadow: 0 0 20px rgba(0,255,255,0.3);">
+            <div class="text-4xl sm:text-6xl md:text-8xl font-mono font-bold text-primary" style="text-shadow: 0 0 20px rgba(0,255,255,0.3);">
               {hours}
             </div>
-            <div class="text-sm text-base-content/60 uppercase tracking-wider mt-2">Hours</div>
+            <div class="text-[10px] sm:text-xs md:text-sm text-base-content/60 uppercase tracking-wider mt-1 sm:mt-2">Hours</div>
           </div>
-          <div class="text-6xl font-bold text-primary/40 -translate-y-4">:</div>
+          <div class="text-3xl sm:text-4xl md:text-6xl font-bold text-primary/40 -translate-y-2 sm:-translate-y-3 md:-translate-y-4">:</div>
           <div class="flex flex-col items-center">
-            <div class="text-8xl font-mono font-bold text-primary" style="text-shadow: 0 0 20px rgba(0,255,255,0.3);">
+            <div class="text-4xl sm:text-6xl md:text-8xl font-mono font-bold text-primary" style="text-shadow: 0 0 20px rgba(0,255,255,0.3);">
               {minutes}
             </div>
-            <div class="text-sm text-base-content/60 uppercase tracking-wider mt-2">Minutes</div>
+            <div class="text-[10px] sm:text-xs md:text-sm text-base-content/60 uppercase tracking-wider mt-1 sm:mt-2">Minutes</div>
           </div>
-          <div class="text-6xl font-bold text-primary/40 -translate-y-4">:</div>
+          <div class="text-3xl sm:text-4xl md:text-6xl font-bold text-primary/40 -translate-y-2 sm:-translate-y-3 md:-translate-y-4">:</div>
           <div class="flex flex-col items-center">
-            <div class="text-8xl font-mono font-bold text-primary" style="text-shadow: 0 0 20px rgba(0,255,255,0.3);">
+            <div class="text-4xl sm:text-6xl md:text-8xl font-mono font-bold text-primary" style="text-shadow: 0 0 20px rgba(0,255,255,0.3);">
               {seconds}
             </div>
-            <div class="text-sm text-base-content/60 uppercase tracking-wider mt-2">Seconds</div>
+            <div class="text-[10px] sm:text-xs md:text-sm text-base-content/60 uppercase tracking-wider mt-1 sm:mt-2">Seconds</div>
           </div>
         </div>
 
         {/* Error message */}
         {error && (
-          <div class="text-sm text-error text-center mt-4">
+          <div class="text-xs sm:text-sm text-error text-center mt-2 sm:mt-3 md:mt-4">
             {error}
           </div>
         )}
 
         {/* Controls */}
-        <div class="flex justify-center gap-6 mt-8">
+        <div class="flex flex-col sm:flex-row justify-center gap-2 sm:gap-4 md:gap-6 mt-4 sm:mt-6 md:mt-8">
           <button
             onClick={handleStart}
             disabled={isRunning}
-            class="btn btn-primary btn-lg gap-3 min-w-[140px] text-lg"
+            class="btn btn-primary sm:btn-lg gap-2 sm:gap-3 min-w-0 sm:min-w-[140px] text-base sm:text-lg"
           >
-            <span class="material-icons text-2xl">play_arrow</span>
+            <span class="material-icons text-xl sm:text-2xl">play_arrow</span>
             Start
           </button>
           <button
             onClick={handleStop}
             disabled={!isRunning}
-            class="btn btn-warning btn-lg gap-3 min-w-[140px] text-lg"
+            class="btn btn-warning sm:btn-lg gap-2 sm:gap-3 min-w-0 sm:min-w-[140px] text-base sm:text-lg"
           >
-            <span class="material-icons text-2xl">stop</span>
+            <span class="material-icons text-xl sm:text-2xl">stop</span>
             Stop
           </button>
           <button
             onClick={handleClear}
-            class="btn btn-error btn-lg gap-3 min-w-[140px] text-lg"
+            class="btn btn-error sm:btn-lg gap-2 sm:gap-3 min-w-0 sm:min-w-[140px] text-base sm:text-lg"
           >
-            <span class="material-icons text-2xl">clear</span>
+            <span class="material-icons text-xl sm:text-2xl">clear</span>
             Clear
           </button>
         </div>
