@@ -15,6 +15,36 @@
 4. Return JSON response
 5. Client renders UI
 
+### Deno KV Usage
+1. ALWAYS use native Deno KV implementation (Deno.openKv)
+2. NEVER use third-party KV libraries or alternatives
+3. Follow atomic operation patterns:
+   ```tsx
+   const kv = await Deno.openKv();
+   await kv.atomic()
+     .check(condition)
+     .set(key, value)
+     .commit();
+   ```
+4. Use proper key structures:
+   - Array-based keys: `["users", userId, "profile"]`
+   - Include proper type hints in keys
+5. Leverage KV features:
+   - Use atomic transactions for data consistency
+   - Use list operations for efficient queries
+   - Use broadcast for real-time updates
+6. Handle KV operations with proper error boundaries:
+   ```tsx
+   try {
+     await kv.set(key, value);
+   } catch (e) {
+     if (e instanceof Deno.errors.NotFound) {
+       // Handle not found
+     }
+     throw e;
+   }
+   ```
+
 ### Balance Management Pattern
 1. NEVER calculate balance in UI components
 2. Use transaction list as source of truth:

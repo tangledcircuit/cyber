@@ -1,5 +1,6 @@
 import { useEffect, useState } from "preact/hooks";
 import AnimatedDashboard from "./AnimatedHero.tsx";
+import Timer from "./Timer.tsx";
 import { Transaction } from "../types/transaction.ts";
 
 interface DashboardProps {
@@ -82,7 +83,10 @@ const Dashboard = ({ user }: DashboardProps) => {
       {/* Tab Content */}
       <div class="mt-4">
         {activeTab === "overview" && (
-          <AnimatedDashboard userName={user.given_name || "User"} />
+          <div class="space-y-4">
+            <Timer userId={user.id} />
+            <AnimatedDashboard userName={user.given_name || "User"} />
+          </div>
         )}
 
         {activeTab === "history" && (
