@@ -15,6 +15,7 @@ export default function Timer({ userId }: TimerProps) {
   const [time, setTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [timerState, setTimerState] = useState<TimerState | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Load initial timer state from KV
   useEffect(() => {
@@ -36,6 +37,7 @@ export default function Timer({ userId }: TimerProps) {
         }
       } catch (error) {
         console.error('Failed to load timer state:', error);
+        setError('Failed to load timer state');
       }
     };
 
@@ -70,17 +72,20 @@ export default function Timer({ userId }: TimerProps) {
   useEffect(() => {
     let interval: number;
     
-    if (isRunning && timerState?.startTime) {
+    const startTime = timerState?.startTime;
+    if (isRunning && startTime) {
       interval = setInterval(() => {
-        const elapsedSeconds = Math.floor((Date.now() - timerState.startTime) / 1000);
+        const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
         setTime(elapsedSeconds);
-        
-        // Animate the timer text
-        animate('.timer-text', {
-          scale: [1, 1.1, 1],
-          duration: 200,
-          easing: 'easeInOutQuad'
+
+        // Broadcast token usage for BalanceDisplay
+        const bc = new BroadcastChannel("token-updates");
+        bc.postMessage({
+          type: "token-usage",
+          userId,
+          amount: 1
         });
+        bc.close();
       }, 1000);
     }
 
@@ -91,7 +96,11 @@ export default function Timer({ userId }: TimerProps) {
     const hrs = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
-    return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    return [
+      hrs.toString().padStart(2, '0'),
+      mins.toString().padStart(2, '0'),
+      secs.toString().padStart(2, '0')
+    ];
   };
 
   const handleStart = async () => {
@@ -120,15 +129,17 @@ export default function Timer({ userId }: TimerProps) {
           status: "running"
         });
         setIsRunning(true);
+        setError(null);
 
-        // Animate the start button
-        animate('.start-btn', {
-          scale: [1, 0.9, 1],
-          duration: 300,
-          easing: 'spring(1, 80, 10, 0)'
+        // Subtle highlight animation
+        animate('.time-display', {
+          backgroundColor: ['rgba(0,255,255,0.1)', 'rgba(0,255,255,0)'],
+          duration: 1000,
+          easing: 'easeOutExpo'
         });
       } catch (error) {
         console.error('Failed to start timer:', error);
+        setError('Failed to start timer');
       }
     }
   };
@@ -136,6 +147,7 @@ export default function Timer({ userId }: TimerProps) {
   const handleStop = async () => {
     if (isRunning && timerState?.startTime) {
       const stopTimestamp = Date.now();
+      const duration = Math.floor((stopTimestamp - timerState.startTime) / 1000);
 
       try {
         const response = await fetch('/api/timer/stop', {
@@ -146,6 +158,7 @@ export default function Timer({ userId }: TimerProps) {
           body: JSON.stringify({
             userId,
             stopTime: stopTimestamp,
+            duration,
           }),
         });
 
@@ -153,21 +166,34 @@ export default function Timer({ userId }: TimerProps) {
           throw new Error('Failed to stop timer');
         }
 
+        const { transaction } = await response.json();
+
         setTimerState(prev => ({
           ...prev!,
           stopTime: stopTimestamp,
           status: "stopped"
         }));
         setIsRunning(false);
+        setError(null);
 
-        // Animate the stop button
-        animate('.stop-btn', {
-          scale: [1, 0.9, 1],
-          duration: 300,
-          easing: 'spring(1, 80, 10, 0)'
+        // Broadcast the transaction update
+        const bc = new BroadcastChannel("token-updates");
+        bc.postMessage({
+          type: "token-update",
+          userId,
+          transaction
+        });
+        bc.close();
+
+        // Subtle fade animation
+        animate('.time-display', {
+          backgroundColor: ['rgba(255,171,0,0.1)', 'rgba(255,171,0,0)'],
+          duration: 1000,
+          easing: 'easeOutExpo'
         });
       } catch (error) {
         console.error('Failed to stop timer:', error);
+        setError('Failed to stop timer');
       }
     }
   };
@@ -195,61 +221,81 @@ export default function Timer({ userId }: TimerProps) {
       });
       setIsRunning(false);
       setTime(0);
+      setError(null);
 
-      // Animate the clear button and timer reset
-      animate('.clear-btn', {
-        scale: [1, 0.9, 1],
-        duration: 300,
-        easing: 'spring(1, 80, 10, 0)'
-      });
-
-      animate('.timer-text', {
-        scale: [1, 0.5, 1],
-        opacity: [1, 0.5, 1],
-        duration: 500,
-        easing: 'easeInOutQuad'
+      // Subtle reset animation
+      animate('.time-display', {
+        backgroundColor: ['rgba(255,0,0,0.1)', 'rgba(255,0,0,0)'],
+        duration: 800,
+        easing: 'easeOutExpo'
       });
     } catch (error) {
       console.error('Failed to clear timer:', error);
+      setError('Failed to clear timer');
     }
   };
 
+  const [hours, minutes, seconds] = formatTime(time);
+
   return (
     <div class="card bg-base-100 shadow-xl">
-      <div class="card-body">
-        <h2 class="card-title flex items-center gap-2">
-          <span class="material-icons">timer</span>
-          Timer
-        </h2>
-        <div class="flex flex-col items-center gap-4">
-          <div class="timer-text text-4xl font-mono font-bold">
-            {formatTime(time)}
+      <div class="card-body p-8">
+        {/* Main timer display */}
+        <div class="time-display flex justify-center items-baseline gap-4 py-12 px-8 rounded-xl bg-base-200/50 transition-colors">
+          <div class="flex flex-col items-center">
+            <div class="text-8xl font-mono font-bold text-primary" style="text-shadow: 0 0 20px rgba(0,255,255,0.3);">
+              {hours}
+            </div>
+            <div class="text-sm text-base-content/60 uppercase tracking-wider mt-2">Hours</div>
           </div>
-          <div class="flex gap-2">
-            <button
-              onClick={handleStart}
-              disabled={isRunning}
-              class="start-btn btn btn-primary gap-2"
-            >
-              <span class="material-icons">play_arrow</span>
-              Start
-            </button>
-            <button
-              onClick={handleStop}
-              disabled={!isRunning}
-              class="stop-btn btn btn-warning gap-2"
-            >
-              <span class="material-icons">stop</span>
-              Stop
-            </button>
-            <button
-              onClick={handleClear}
-              class="clear-btn btn btn-error gap-2"
-            >
-              <span class="material-icons">clear</span>
-              Clear
-            </button>
+          <div class="text-6xl font-bold text-primary/40 -translate-y-4">:</div>
+          <div class="flex flex-col items-center">
+            <div class="text-8xl font-mono font-bold text-primary" style="text-shadow: 0 0 20px rgba(0,255,255,0.3);">
+              {minutes}
+            </div>
+            <div class="text-sm text-base-content/60 uppercase tracking-wider mt-2">Minutes</div>
           </div>
+          <div class="text-6xl font-bold text-primary/40 -translate-y-4">:</div>
+          <div class="flex flex-col items-center">
+            <div class="text-8xl font-mono font-bold text-primary" style="text-shadow: 0 0 20px rgba(0,255,255,0.3);">
+              {seconds}
+            </div>
+            <div class="text-sm text-base-content/60 uppercase tracking-wider mt-2">Seconds</div>
+          </div>
+        </div>
+
+        {/* Error message */}
+        {error && (
+          <div class="text-sm text-error text-center mt-4">
+            {error}
+          </div>
+        )}
+
+        {/* Controls */}
+        <div class="flex justify-center gap-6 mt-8">
+          <button
+            onClick={handleStart}
+            disabled={isRunning}
+            class="btn btn-primary btn-lg gap-3 min-w-[140px] text-lg"
+          >
+            <span class="material-icons text-2xl">play_arrow</span>
+            Start
+          </button>
+          <button
+            onClick={handleStop}
+            disabled={!isRunning}
+            class="btn btn-warning btn-lg gap-3 min-w-[140px] text-lg"
+          >
+            <span class="material-icons text-2xl">stop</span>
+            Stop
+          </button>
+          <button
+            onClick={handleClear}
+            class="btn btn-error btn-lg gap-3 min-w-[140px] text-lg"
+          >
+            <span class="material-icons text-2xl">clear</span>
+            Clear
+          </button>
         </div>
       </div>
     </div>

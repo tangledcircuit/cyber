@@ -3,9 +3,9 @@ import { Handlers } from "$fresh/server.ts";
 export const handler: Handlers = {
   async POST(req) {
     try {
-      const { userId, stopTime } = await req.json();
+      const { userId, stopTime, duration } = await req.json();
       
-      if (!userId || !stopTime) {
+      if (!userId || !stopTime || typeof duration !== 'number') {
         return new Response("Missing required fields", { status: 400 });
       }
 
@@ -19,17 +19,33 @@ export const handler: Handlers = {
         return new Response("No active timer found", { status: 400 });
       }
 
-      // Calculate duration
-      const duration = stopTime - startTime;
+      // Get current balance
+      const balanceEntry = await kv.get(["balances", userId]);
+      const currentBalance = (balanceEntry.value as number) || 0;
 
-      // Store the stop time and duration in KV
+      // Create transaction for token usage
+      const transactionId = crypto.randomUUID();
+      const transaction = {
+        id: transactionId,
+        userId,
+        amount: -duration, // Negative amount for usage
+        timestamp: Date.now(),
+        type: "usage",
+        description: `Timer usage: ${duration} seconds`,
+      };
+
+      // Update timer state and create transaction atomically
       await kv.atomic()
+        .check(startTimeEntry)
+        .check(balanceEntry)
         .set(["timers", userId, "stop"], stopTime)
         .set(["timers", userId, "duration"], duration)
         .set(["timers", userId, "status"], "stopped")
+        .set(["transactions", userId, transactionId], transaction)
+        .set(["balances", userId], currentBalance - duration)
         .commit();
 
-      // Broadcast the timer stop event
+      // Broadcast the timer stop and transaction update
       await kv.atomic()
         .set(["events", "timer", userId], {
           type: "timer-update",
@@ -38,9 +54,18 @@ export const handler: Handlers = {
           duration,
           userId,
         })
+        .set(["events", "transaction", userId], {
+          type: "token-update",
+          userId,
+          transaction,
+        })
         .commit();
 
-      return new Response(JSON.stringify({ success: true, duration }), {
+      return new Response(JSON.stringify({ 
+        success: true,
+        duration,
+        transaction,
+      }), {
         status: 200,
         headers: { "Content-Type": "application/json" },
       });

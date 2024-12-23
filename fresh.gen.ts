@@ -20,6 +20,8 @@ import * as $api_timer_start from "./routes/api/timer/start.ts";
 import * as $api_timer_state from "./routes/api/timer/state.ts";
 import * as $api_timer_stop from "./routes/api/timer/stop.ts";
 import * as $api_tokens_userId_ from "./routes/api/tokens/[userId].ts";
+import * as $api_tokens_balance from "./routes/api/tokens/balance.ts";
+import * as $api_tokens_use from "./routes/api/tokens/use.ts";
 import * as $api_tokens_watch from "./routes/api/tokens/watch.ts";
 import * as $api_transactions from "./routes/api/transactions.ts";
 import * as $dashboard from "./routes/dashboard.tsx";
@@ -61,6 +63,8 @@ const manifest = {
     "./routes/api/timer/state.ts": $api_timer_state,
     "./routes/api/timer/stop.ts": $api_timer_stop,
     "./routes/api/tokens/[userId].ts": $api_tokens_userId_,
+    "./routes/api/tokens/balance.ts": $api_tokens_balance,
+    "./routes/api/tokens/use.ts": $api_tokens_use,
     "./routes/api/tokens/watch.ts": $api_tokens_watch,
     "./routes/api/transactions.ts": $api_transactions,
     "./routes/dashboard.tsx": $dashboard,
